@@ -1,15 +1,12 @@
 namespace NHSOrgsMCP.Models;
 
 /// <summary>
-/// Configuration for Azure Search integration
+/// Configuration for API Management integration
 /// </summary>
 public class AzureSearchConfig
 {
-    public string ServiceName { get; set; } = "nhsuksearchintuks";
-    public string Endpoint { get; set; } = "https://nhsuksearchintuks.search.windows.net";
-    public string ApiKey { get; set; } = "REDACTED_API_KEY";
-    public string ServiceSearchIndex { get; set; } = "service-search-internal-3-11";
-    public string PostcodeIndex { get; set; } = "postcodesandplaces-1-0-b-int";
+    public string Endpoint { get; set; } = "https://nhsuk-apim-int-uks.azure-api.net/service-search";
+    public string ApiKey { get; set; } = "";
 }
 
 /// <summary>
@@ -80,4 +77,28 @@ public class OrganizationResult
     public string? Postcode { get; set; }
     public double Distance { get; set; }
     public PostcodeResult? Geocode { get; set; }
+}
+
+/// <summary>
+/// Health topic content section
+/// </summary>
+public class HealthTopicSection
+{
+    public string? Headline { get; set; }
+    public string? Text { get; set; }
+    public string? Description { get; set; }
+}
+
+/// <summary>
+/// Health topic search result from NHS Conditions API
+/// </summary>
+public class HealthTopicResult
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? Url { get; set; }
+    public string? DateModified { get; set; }
+    public string? LastReviewed { get; set; }
+    public List<string>? Genre { get; set; }
+    public List<HealthTopicSection>? Sections { get; set; }
 }

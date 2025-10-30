@@ -120,10 +120,8 @@ Add this server to your Claude Desktop configuration file (`~/Library/Applicatio
     "nhs-organizations-mcp-server": {
       "command": "/path/to/NHSOrgsMCP/publish/NHSOrgsMCP",
       "env": {
-        "AZURE_SEARCH_ENDPOINT": "https://nhsuk-apim-int-uks.azure-api.net/service-search",
-        "AZURE_SEARCH_API_KEY": "your-subscription-key-here",
-        "AZURE_SEARCH_POSTCODE_INDEX": "postcodesandplaces",
-        "AZURE_SEARCH_SERVICE_INDEX": "service-search"
+        "API_MANAGEMENT_ENDPOINT": "https://nhsuk-apim-int-uks.azure-api.net/service-search",
+        "API_MANAGEMENT_SUBSCRIPTION_KEY": "your-subscription-key-here"
       }
     }
   }
@@ -154,11 +152,10 @@ The server is built using:
 
 The API Management configuration uses environment variables:
 
-- **Endpoint**: https://nhsuk-apim-int-uks.azure-api.net/service-search
-- **Subscription Key**: Provided via AZURE_SEARCH_API_KEY environment variable
-- **Postcode Endpoint**: /postcodesandplaces/{postcode}?api-version=2
+- **Endpoint**: <https://nhsuk-apim-int-uks.azure-api.net/service-search>
+- **Subscription Key**: Provided via API_MANAGEMENT_SUBSCRIPTION_KEY environment variable
+- **Postcode Endpoint**: /postcodesandplaces/?search={postcode}&api-version=2
 - **Search Endpoint**: /search?api-version=2
-- **Postcode Index**: postcodesandplaces-1-0-b-int
 
 ## Usage Examples
 

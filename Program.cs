@@ -43,16 +43,14 @@ builder.Logging.AddConsole(options =>
     options.LogToStandardErrorThreshold = parsedLevel;
 });
 
-// Configure Azure Search
+// Configure API Management
 var azureSearchConfig = new AzureSearchConfig
 {
-    Endpoint = Environment.GetEnvironmentVariable("AZURE_SEARCH_ENDPOINT") ?? "https://nhs-uk-search.search.windows.net",
-    ApiKey = Environment.GetEnvironmentVariable("AZURE_SEARCH_API_KEY") ?? "",
-    PostcodeIndex = Environment.GetEnvironmentVariable("AZURE_SEARCH_POSTCODE_INDEX") ?? "postcode-index",
-    ServiceSearchIndex = Environment.GetEnvironmentVariable("AZURE_SEARCH_SERVICE_INDEX") ?? "service-search-index"
+    Endpoint = Environment.GetEnvironmentVariable("API_MANAGEMENT_ENDPOINT") ?? "https://nhsuk-apim-int-uks.azure-api.net/service-search",
+    ApiKey = Environment.GetEnvironmentVariable("API_MANAGEMENT_SUBSCRIPTION_KEY") ?? ""
 };
 
-// Only register Azure Search service if configuration is provided
+// Only register API Management service if configuration is provided
 if (!string.IsNullOrEmpty(azureSearchConfig.ApiKey))
 {
     builder.Services.AddSingleton(azureSearchConfig);
@@ -124,7 +122,7 @@ if (runInCloudMode && webBuilder != null)
                 return Results.Json(new
                 {
                     success = false,
-                    error = "Azure Search service not configured"
+                    error = "API Management service not configured"
                 });
             }
             
@@ -164,7 +162,7 @@ if (runInCloudMode && webBuilder != null)
                 return Results.Json(new
                 {
                     success = false,
-                    error = "Azure Search service not configured"
+                    error = "API Management service not configured"
                 });
             }
             
@@ -231,7 +229,7 @@ if (runInCloudMode && webBuilder != null)
                 return Results.Json(new
                 {
                     success = false,
-                    error = "Azure Search service not configured"
+                    error = "API Management service not configured"
                 });
             }
             

@@ -227,4 +227,105 @@ public class AzureSearchService
             throw;
         }
     }
+
+    /// <summary>
+    /// Get detailed information about a specific health condition or topic from the NHS API
+    /// </summary>
+    /// <param name="topicSlug">The health topic slug (e.g., 'asthma', 'diabetes', 'flu')</param>
+    /// <returns>Health topic information including name, description, content sections, and last reviewed date</returns>
+    public async Task<HealthTopicResult?> GetHealthTopicAsync(string topicSlug)
+    {
+        try
+        {
+            var normalizedSlug = topicSlug.Trim().ToLower();
+            
+            // Extract base URL (remove /service-search if present) and use /conditions endpoint
+            var baseUrl = _config.Endpoint.Replace("/service-search", "");
+            var url = $"{baseUrl}/conditions/{Uri.EscapeDataString(normalizedSlug)}";
+
+            _logger.LogInformation("Fetching health topic: {TopicSlug} from {Url}", normalizedSlug, url);
+            
+            var response = await _httpClient.GetAsync(url);
+            
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                _logger.LogWarning("Health topic not found: {TopicSlug}", normalizedSlug);
+                return null;
+            }
+            
+            response.EnsureSuccessStatusCode();
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            using var document = JsonDocument.Parse(responseContent);
+            
+            var result = new HealthTopicResult();
+
+            // Extract basic information
+            if (document.RootElement.TryGetProperty("name", out var nameProp))
+                result.Name = nameProp.GetString();
+
+            if (document.RootElement.TryGetProperty("description", out var descProp))
+                result.Description = descProp.GetString();
+
+            if (document.RootElement.TryGetProperty("url", out var urlProp))
+                result.Url = urlProp.GetString();
+
+            if (document.RootElement.TryGetProperty("dateModified", out var modifiedProp))
+                result.DateModified = modifiedProp.GetString();
+
+            if (document.RootElement.TryGetProperty("lastReviewed", out var reviewedProp))
+            {
+                if (reviewedProp.ValueKind == JsonValueKind.Array && reviewedProp.GetArrayLength() > 0)
+                {
+                    result.LastReviewed = reviewedProp[0].GetString();
+                }
+                else if (reviewedProp.ValueKind == JsonValueKind.String)
+                {
+                    result.LastReviewed = reviewedProp.GetString();
+                }
+            }
+
+            if (document.RootElement.TryGetProperty("genre", out var genreProp))
+            {
+                if (genreProp.ValueKind == JsonValueKind.Array)
+                {
+                    result.Genre = genreProp.EnumerateArray()
+                        .Select(x => x.GetString())
+                        .Where(x => x != null)
+                        .Cast<string>()
+                        .ToList();
+                }
+            }
+
+            // Extract content sections from mainEntityOfPage
+            if (document.RootElement.TryGetProperty("mainEntityOfPage", out var mainEntityProp))
+            {
+                result.Sections = new List<HealthTopicSection>();
+                
+                foreach (var section in mainEntityProp.EnumerateArray())
+                {
+                    var topicSection = new HealthTopicSection();
+                    
+                    if (section.TryGetProperty("headline", out var headlineProp))
+                        topicSection.Headline = headlineProp.GetString();
+
+                    if (section.TryGetProperty("text", out var textProp))
+                        topicSection.Text = textProp.GetString();
+
+                    if (section.TryGetProperty("description", out var sectionDescProp))
+                        topicSection.Description = sectionDescProp.GetString();
+
+                    result.Sections.Add(topicSection);
+                }
+            }
+
+            _logger.LogInformation("Successfully retrieved health topic: {Name}", result.Name);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching health topic: {TopicSlug}", topicSlug);
+            throw;
+        }
+    }
 }
