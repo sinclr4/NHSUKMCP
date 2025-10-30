@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NHS Organizations Search</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        input, select, button { padding: 10px; margin: 5px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        .result { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>NHS Organizations Search Client</h1>
+    
+    <div class="section">
+        <h2>Search by Postcode</h2>
+        <select id="orgType">
+            <option value="PHA">Pharmacy</option>
+            <option value="GPP">GP Practice</option>
+            <option value="HOS">Hospital</option>
+            <option value="DEN">Dentist</option>
+        </select>
+        <input type="text" id="postcode" placeholder="e.g., SW1A 1AA" value="SW1A 1AA">
+        <input type="number" id="maxResults" placeholder="Max results" value="5" min="1" max="20">
+        <button onclick="searchByPostcode()">Search</button>
+        <div id="postcodeResult" class="result"></div>
+    </div>
+
+    <div class="section">
+        <h2>Search by Coordinates</h2>
+        <select id="orgTypeCoord">
+            <option value="PHA">Pharmacy</option>
+            <option value="GPP">GP Practice</option>
+            <option value="HOS">Hospital</option>
+            <option value="DEN">Dentist</option>
+        </select>
+        <input type="number" id="latitude" placeholder="Latitude" value="51.5" step="0.001">
+        <input type="number" id="longitude" placeholder="Longitude" value="-0.14" step="0.001">
+        <input type="number" id="maxResultsCoord" placeholder="Max results" value="5" min="1" max="20">
+        <button onclick="searchByCoordinates()">Search</button>
+        <div id="coordResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://nhs-orgs-mcp.blackflower-9a1bf005.uksouth.azurecontainerapps.io';
+
+        async function searchByPostcode() {
+            const orgType = document.getElementById('orgType').value;
+            const postcode = document.getElementById('postcode').value;
+            const maxResults = document.getElementById('maxResults').value;
+            
+            const url = `${API_BASE}/api/search/postcode?organizationType=${orgType}&postcode=${encodeURIComponent(postcode)}&maxResults=${maxResults}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                let html = '<h3>Results:</h3>';
+                if (data.organizations && data.organizations.length > 0) {
+                    html += '<ul>';
+                    data.organizations.forEach(org => {
+                        html += `<li><strong>${org.organizationName}</strong> - ${org.address}, ${org.postcode} (${org.distance.toFixed(2)} miles)</li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<p>No results found</p>';
+                }
+                
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                document.getElementById('postcodeResult').innerHTML = html;
+            } catch (error) {
+                document.getElementById('postcodeResult').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        }
+
+        async function searchByCoordinates() {
+            const orgType = document.getElementById('orgTypeCoord').value;
+            const latitude = document.getElementById('latitude').value;
+            const longitude = document.getElementById('longitude').value;
+            const maxResults = document.getElementById('maxResultsCoord').value;
+            
+            const url = `${API_BASE}/api/search/coordinates?organizationType=${orgType}&latitude=${latitude}&longitude=${longitude}&maxResults=${maxResults}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                let html = '<h3>Results:</h3>';
+                if (data.organizations && data.organizations.length > 0) {
+                    html += '<ul>';
+                    data.organizations.forEach(org => {
+                        html += `<li><strong>${org.organizationName}</strong> - ${org.address}, ${org.postcode} (${org.distance.toFixed(2)} miles)</li>`;
+                    });
+                    html += '</ul>';
+                } else {
+                    html += '<p>No results found</p>';
+                }
+                
+                html += '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                document.getElementById('coordResult').innerHTML = html;
+            } catch (error) {
+                document.getElementById('coordResult').innerHTML = '<p style="color: red;">Error: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
