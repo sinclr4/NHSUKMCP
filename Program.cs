@@ -344,10 +344,137 @@ if (runInCloudMode && webBuilder != null)
         }
     });
     
+    // MCP tools list endpoint
+    app.MapGet("/api/tools", () =>
+    {
+        return Results.Json(new
+        {
+            success = true,
+            serverInfo = new
+            {
+                name = "nhs-uk-mcp-server",
+                version = "1.0.0",
+                description = "NHS UK Model Context Protocol Server - Search NHS organisations and health information"
+            },
+            tools = new object[]
+            {
+                new
+                {
+                    name = "get_organisation_types",
+                    description = "Get a list of all available NHS organisation types (e.g., Pharmacy, GP, Hospital, Dentist, etc.)",
+                    inputSchema = new
+                    {
+                        type = "object",
+                        properties = new { },
+                        required = new string[] { }
+                    }
+                },
+                new
+                {
+                    name = "convert_postcode_to_coordinates",
+                    description = "Convert a UK postcode to latitude and longitude coordinates",
+                    inputSchema = new
+                    {
+                        type = "object",
+                        properties = new
+                        {
+                            postcode = new
+                            {
+                                type = "string",
+                                description = "UK postcode (e.g., 'SW1A 1AA', 'M1 1AE', 'B1 1AA')"
+                            }
+                        },
+                        required = new[] { "postcode" }
+                    }
+                },
+                new
+                {
+                    name = "search_organisations_by_postcode",
+                    description = "Search for NHS organisations near a postcode. Returns organisations sorted by distance.",
+                    inputSchema = new
+                    {
+                        type = "object",
+                        properties = new
+                        {
+                            organisationType = new
+                            {
+                                type = "string",
+                                description = "Type of organisation to search for (e.g., 'PHA' for Pharmacy, 'GPB' for GP, 'HOS' for Hospital). Use get_organisation_types to see all available types."
+                            },
+                            postcode = new
+                            {
+                                type = "string",
+                                description = "UK postcode to search near (e.g., 'SW1A 1AA')"
+                            },
+                            maxResults = new
+                            {
+                                type = "integer",
+                                description = "Maximum number of results to return (default: 10)"
+                            }
+                        },
+                        required = new[] { "organisationType", "postcode" }
+                    }
+                },
+                new
+                {
+                    name = "search_organisations_by_coordinates",
+                    description = "Search for NHS organisations near specific coordinates. Returns organisations sorted by distance.",
+                    inputSchema = new
+                    {
+                        type = "object",
+                        properties = new
+                        {
+                            organisationType = new
+                            {
+                                type = "string",
+                                description = "Type of organisation to search for (e.g., 'PHA' for Pharmacy, 'GPB' for GP, 'HOS' for Hospital)"
+                            },
+                            latitude = new
+                            {
+                                type = "number",
+                                description = "Latitude coordinate (e.g., 51.5074)"
+                            },
+                            longitude = new
+                            {
+                                type = "number",
+                                description = "Longitude coordinate (e.g., -0.1278)"
+                            },
+                            maxResults = new
+                            {
+                                type = "integer",
+                                description = "Maximum number of results to return (default: 10)"
+                            }
+                        },
+                        required = new[] { "organisationType", "latitude", "longitude" }
+                    }
+                },
+                new
+                {
+                    name = "get_health_topic",
+                    description = "Get detailed information about a specific health condition or topic from the NHS API. Returns comprehensive information including description, content sections, and last reviewed date.",
+                    inputSchema = new
+                    {
+                        type = "object",
+                        properties = new
+                        {
+                            topic = new
+                            {
+                                type = "string",
+                                description = "Health topic slug (e.g., 'asthma', 'diabetes', 'flu', 'covid-19', 'heart-disease', 'stroke', 'cancer', 'depression', 'anxiety')"
+                            }
+                        },
+                        required = new[] { "topic" }
+                    }
+                }
+            }
+        });
+    });
+    
     logger.LogInformation("Starting HTTP API on port 8080");
     logger.LogInformation("Available endpoints:");
     logger.LogInformation("  GET /healthz - Health check");
     logger.LogInformation("  GET /ready - Readiness check");
+    logger.LogInformation("  GET /api/tools - List available MCP tools");
     logger.LogInformation("  GET /api/organisation-types - List organisation types");
     logger.LogInformation("  GET /api/postcode/{{postcode}} - Convert postcode to coordinates");
     logger.LogInformation("  GET /api/search/postcode?organisationType={{type}}&postcode={{postcode}}&maxResults={{n}}");
