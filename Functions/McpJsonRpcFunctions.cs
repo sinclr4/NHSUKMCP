@@ -16,7 +16,7 @@ public class McpJsonRpcFunctions
 {
     private readonly ILogger<McpJsonRpcFunctions> _logger;
     private readonly NHSOrganisationSearchTools _orgTools;
- private readonly NHSHealthContentTools _healthTools;
+    private readonly NHSHealthContentTools _healthTools;
 
     public McpJsonRpcFunctions(
     ILogger<McpJsonRpcFunctions> logger,
@@ -37,15 +37,32 @@ public class McpJsonRpcFunctions
     {
         _logger.LogInformation("MCP JSON-RPC request received");
 
+        string requestBody = string.Empty;
+        JsonRpcRequest? jsonRpcRequest = null;
         try
         {
-   var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-  var jsonRpcRequest = JsonSerializer.Deserialize<JsonRpcRequest>(requestBody);
+   requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+   _logger.LogDebug("Raw request body: {Body}", requestBody);
+
+   var options = new JsonSerializerOptions
+   {
+ PropertyNameCaseInsensitive = true
+   };
+   jsonRpcRequest = JsonSerializer.Deserialize<JsonRpcRequest>(requestBody, options);
 
             if (jsonRpcRequest == null)
       {
+   _logger.LogWarning("Failed to deserialize JSON-RPC request");
             return CreateJsonRpcError(req, null, -32700, "Parse error");
             }
+
+   if (string.IsNullOrWhiteSpace(jsonRpcRequest.Method))
+            {
+   _logger.LogWarning("JSON-RPC method is missing or empty. Body was: {Body}", requestBody);
+   return CreateJsonRpcError(req, jsonRpcRequest.Id, -32601, "Method not found (empty)");
+            }
+
+   _logger.LogDebug("Dispatching method: {Method} (Id: {Id})", jsonRpcRequest.Method, jsonRpcRequest.Id);
 
    object? result = jsonRpcRequest.Method switch
    {
@@ -60,8 +77,9 @@ public class McpJsonRpcFunctions
         }
         catch (Exception ex)
         {
-      _logger.LogError(ex, "Error processing MCP request");
-return CreateJsonRpcError(req, null, -32603, $"Internal error: {ex.Message}");
+      _logger.LogError(ex, "Error processing MCP request. Raw body: {Body}", requestBody);
+ // Return JSON-RPC error with internal error code
+ return CreateJsonRpcError(req, jsonRpcRequest?.Id, -32603, $"Internal error: {ex.Message}");
         }
     }
 
@@ -166,7 +184,7 @@ inputSchema = new
  private async Task<object> HandleToolsCallAsync(JsonRpcRequest request)
     {
         var paramsJson = JsonSerializer.Serialize(request.Params);
-  var callParams = JsonSerializer.Deserialize<ToolCallParams>(paramsJson);
+  var callParams = JsonSerializer.Deserialize<ToolCallParams>(paramsJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
  if (callParams == null)
       throw new Exception("Invalid tool call parameters");
@@ -180,21 +198,21 @@ inputSchema = new
        "get_organisation_types" => await _orgTools.GetOrganisationTypesAsync(),
           
       "convert_postcode_to_coordinates" => await _orgTools.ConvertPostcodeToCoordinatesAsync(
-        args["postcode"].GetString()!),
+ args.TryGetValue("postcode", out var pc) ? pc.GetString()! : throw new Exception("postcode argument missing")),
      
   "search_organisations_by_postcode" => await _orgTools.SearchOrganisationsByPostcodeAsync(
-            args["organisationType"].GetString()!,
-      args["postcode"].GetString()!,
-      args.TryGetValue("maxResults", out var mr) ? mr.GetInt32() : 10),
+            args.TryGetValue("organisationType", out var ot1) ? ot1.GetString()! : throw new Exception("organisationType argument missing"),
+ args.TryGetValue("postcode", out var pc2) ? pc2.GetString()! : throw new Exception("postcode argument missing"),
+ args.TryGetValue("maxResults", out var mr) ? mr.GetInt32() :10),
 
             "search_organisations_by_coordinates" => await _orgTools.SearchOrganisationsByCoordinatesAsync(
-        args["organisationType"].GetString()!,
-  args["latitude"].GetDouble(),
- args["longitude"].GetDouble(),
-    args.TryGetValue("maxResults", out var mr2) ? mr2.GetInt32() : 10),
+        args.TryGetValue("organisationType", out var ot2) ? ot2.GetString()! : throw new Exception("organisationType argument missing"),
+ args.TryGetValue("latitude", out var lat) ? lat.GetDouble() : throw new Exception("latitude argument missing"),
+ args.TryGetValue("longitude", out var lng) ? lng.GetDouble() : throw new Exception("longitude argument missing"),
+ args.TryGetValue("maxResults", out var mr2) ? mr2.GetInt32() :10),
               
                 "get_health_topic" => await _healthTools.GetHealthTopicAsync(
-   args["topic"].GetString()!),
+ args.TryGetValue("topic", out var topic) ? topic.GetString()! : throw new Exception("topic argument missing")),
            
              _ => throw new Exception($"Unknown tool: {callParams.Name}")
           };

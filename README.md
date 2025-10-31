@@ -1,6 +1,6 @@
 # NHS Organisations MCP Server - Azure Functions
 
-This is an **Azure Functions** implementation that provides Model Context Protocol (MCP) tools via both native JSON-RPC and streamable HTTP endpoints for searching NHS organizations and health information.
+This is an **Azure Functions** implementation that provides Model Context Protocol (MCP) tools via native JSON-RPC endpoint for searching NHS organizations and health information.
 
 ## ?? Quick Start
 
@@ -19,107 +19,93 @@ This is an **Azure Functions** implementation that provides Model Context Protoc
    ```
 
 2. **Configure settings**:
- Create/update `local.settings.json`:
+   Create/update `local.settings.json`:
    ```json
-{
+   {
      "IsEncrypted": false,
-     "Values": {
-  "AzureWebJobsStorage": "UseDevelopmentStorage=true",
-"FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
-     "API_MANAGEMENT_ENDPOINT": "https://nhsuk-apim-int-uks.azure-api.net/service-search",
-     "API_MANAGEMENT_SUBSCRIPTION_KEY": "your-subscription-key-here"
+ "Values": {
+     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+       "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+       "API_MANAGEMENT_ENDPOINT": "https://nhsuk-apim-int-uks.azure-api.net/service-search",
+       "API_MANAGEMENT_SUBSCRIPTION_KEY": "your-subscription-key-here"
+  }
    }
-   }
-   ```
+ ```
 
 3. **Run locally**:
    ```bash
    func start
    ```
+   
+   **Note**: If you get "port is already in use" error:
+   ```powershell
+   # Clear specific port
+   .\clear-port-7071.ps1
+   
+   # Or clear all processes
+   .\cleanup-all.ps1
+   ```
+   See [CLEARING_PORTS.md](CLEARING_PORTS.md) for details.
 
-4. **Test endpoints**:
+4. **Test endpoint**:
    ```bash
    # MCP JSON-RPC (Native Protocol)
-   curl -X POST http://localhost:7071/mcp \
+   curl -X POST http://localhost:7071/api/mcp \
      -H "Content-Type: application/json" \
      -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 
-   # Or use SSE streaming endpoints
-   curl http://localhost:7071/mcp/tools/get_organisation_types
-
-   # Or use the test scripts
+   # Or use the test script
    ./test-mcp-jsonrpc.sh    # Test JSON-RPC
-   ./test-functions.sh      # Test SSE endpoints
    ```
 
-## ?? Features
+## ? Features
 
-- ? **Native MCP Protocol**: JSON-RPC 2.0 implementation (`/mcp` endpoint)
-- ? **SSE Streaming**: Server-Sent Events for progressive data delivery
-- ? **Dual Interface**: Both JSON-RPC and HTTP/SSE endpoints
-- ? **Tool Discovery**: MCP `tools/list` and REST `/mcp/tools`
-- ? **Organisation Search**: Find NHS organizations by postcode or coordinates
-- ? **Organisation Types**: Get all available NHS organization types
-- ? **Postcode Conversion**: Convert UK postcodes to latitude/longitude
-- ? **Health Information**: Retrieve detailed NHS health topic information
-- ? **GET & POST Support**: SSE endpoints support both HTTP methods
+- ?? **Native MCP Protocol**: JSON-RPC 2.0 implementation (`/api/mcp` endpoint)
+- ?? **Tool Discovery**: MCP `tools/list` for discovering available tools
+- ?? **Organisation Search**: Find NHS organizations by postcode or coordinates
+- ?? **Organisation Types**: Get all available NHS organization types
+- ?? **Postcode Conversion**: Convert UK postcodes to latitude/longitude
+- ?? **Health Information**: Retrieve detailed NHS health topic information
 
-## ?? API Endpoints
+## ?? API Endpoint
 
 ### MCP JSON-RPC Endpoint (Native Protocol)
 
-**POST** `/mcp`
+**POST** `/api/mcp`
 
 Native Model Context Protocol implementation with JSON-RPC 2.0.
 
 ```bash
 # Initialize
-curl -X POST http://localhost:7071/mcp \
--H "Content-Type: application/json" \
--d '{
-    "jsonrpc": "2.0",
+curl -X POST http://localhost:7071/api/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+ "jsonrpc": "2.0",
     "id": 1,
-"method": "initialize",
+    "method": "initialize",
     "params": {"protocolVersion": "2024-11-05"}
   }'
 
 # List tools
-curl -X POST http://localhost:7071/mcp \
+curl -X POST http://localhost:7071/api/mcp \
   -H "Content-Type: application/json" \
--d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{} }'
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
 
 # Call a tool
-curl -X POST http://localhost:7071/mcp \
+curl -X POST http://localhost:7071/api/mcp \
   -H "Content-Type: application/json" \
   -d '{
     "jsonrpc": "2.0",
     "id": 3,
-   "method": "tools/call",
+    "method": "tools/call",
     "params": {
       "name": "search_organisations_by_postcode",
       "arguments": {"organisationType":"PHA","postcode":"SW1A 1AA","maxResults":5}
-  }
+    }
   }'
 ```
 
 ?? **Full MCP JSON-RPC Documentation**: [MCP_JSON_RPC_GUIDE.md](MCP_JSON_RPC_GUIDE.md)
-
-### SSE Streaming Endpoints (HTTP/REST)
-
-Alternative HTTP endpoints with Server-Sent Events for streaming.
-
-**GET** `/mcp/tools/get_organisation_types` - Returns all NHS organisation types
-**GET/POST** `/mcp/tools/convert_postcode_to_coordinates` - Convert postcode
-**GET/POST** `/mcp/tools/search_organisations_by_postcode` - Search by postcode
-**GET/POST** `/mcp/tools/search_organisations_by_coordinates` - Search by coordinates
-**GET/POST** `/mcp/tools/get_health_topic` - Get health information
-
-```bash
-# Example SSE request
-curl -N "http://localhost:7071/mcp/tools/search_organisations_by_postcode?organisationType=PHA&postcode=SW1A%201AA&maxResults=5"
-```
-
-?? **Full SSE Documentation**: [README_AZURE_FUNCTIONS.md](README_AZURE_FUNCTIONS.md)
 
 ## ?? Organisation Types
 
@@ -136,7 +122,7 @@ curl -N "http://localhost:7071/mcp/tools/search_organisations_by_postcode?organi
 | PHA | Pharmacy |
 | UC | Urgent Care |
 
-## ?? Response Formats
+## ?? Response Format
 
 ### JSON-RPC Format (MCP Native)
 
@@ -152,19 +138,6 @@ curl -N "http://localhost:7071/mcp/tools/search_organisations_by_postcode?organi
 }
 ```
 
-### SSE Format (Streaming)
-
-```
-event: metadata
-data: {"postcode":"SW1A 1AA"}
-
-event: organisation
-data: {"organisationName":"Boots Pharmacy",...}
-
-event: complete
-data: {"success":true}
-```
-
 ## ?? Deploy to Azure
 
 ```bash
@@ -177,17 +150,32 @@ See [README_AZURE_FUNCTIONS.md](README_AZURE_FUNCTIONS.md) for detailed deployme
 
 ## ?? Testing
 
+### Test Scripts
+
 ```bash
 # Test MCP JSON-RPC protocol
 ./test-mcp-jsonrpc.sh http://localhost:7071
 # or
 .\test-mcp-jsonrpc.ps1 "http://localhost:7071"
-
-# Test SSE streaming endpoints
-./test-functions.sh http://localhost:7071
-# or
-.\test-functions.ps1 "http://localhost:7071"
 ```
+
+### MCP Inspector (Interactive Testing)
+
+The official MCP Inspector provides an interactive UI for testing:
+
+```bash
+# Quick diagnostic check
+.\diagnose-mcp-inspector.ps1
+
+# Launch Inspector (USE /api/mcp endpoint!)
+npx @modelcontextprotocol/inspector http://localhost:7071/api/mcp
+```
+
+?? **Important**: Use `/api/mcp` (with `/api` prefix) for the Inspector!
+
+**Troubleshooting?** See [MCP_INSPECTOR_TROUBLESHOOTING.md](MCP_INSPECTOR_TROUBLESHOOTING.md)
+
+**Full testing guide**: [TESTING_WITH_MCP_INSPECTOR.md](TESTING_WITH_MCP_INSPECTOR.md)
 
 ## ?? Project Structure
 
@@ -195,40 +183,24 @@ See [README_AZURE_FUNCTIONS.md](README_AZURE_FUNCTIONS.md) for detailed deployme
 NHSUKMCP/
 ??? Functions/
 ?   ??? McpJsonRpcFunctions.cs  # MCP JSON-RPC endpoint
-?   ??? McpFunctions.cs   # SSE streaming endpoints
 ??? Tools/
 ?   ??? NHSOrganisationSearchTools.cs  # MCP tool implementations
 ?   ??? NHSHealthContentTools.cs       # Health content tools
 ??? Models/
-?   ??? Models.cs                # Data models
+?   ??? Models.cs     # Data models
 ??? Services/
 ?   ??? AzureSearchService.cs    # API Management integration
 ??? Program.cs         # Azure Functions host
-??? host.json      # Functions configuration
-??? test-mcp-jsonrpc.sh          # JSON-RPC tests (Bash)
-??? test-mcp-jsonrpc.ps1    # JSON-RPC tests (PowerShell)
-??? test-functions.sh   # SSE tests (Bash)
-??? test-functions.ps1  # SSE tests (PowerShell)
+??? host.json    # Functions configuration
+??? test-mcp-jsonrpc.ps1   # JSON-RPC tests
 ```
-
-## ?? Which Endpoint Should I Use?
-
-### Use MCP JSON-RPC (`/mcp`) when:
-- ? Building MCP-compliant clients
-- ? Need native protocol integration
-- ? Want standard tool calling
-- ? Building AI agents or assistants
-
-### Use SSE Endpoints (`/mcp/tools/*`) when:
-- ? Building web UIs
-- ? Need progressive/streaming responses
-- ? Want simple HTTP GET/POST
-- ? Browser-based applications
 
 ## ?? Documentation
 
 - [MCP JSON-RPC Guide](MCP_JSON_RPC_GUIDE.md) - Native MCP protocol usage
-- [Azure Functions Guide](README_AZURE_FUNCTIONS.md) - SSE streaming endpoints
+- [MCP Inspector Testing](TESTING_WITH_MCP_INSPECTOR.md) - Interactive testing guide
+- [MCP Inspector Troubleshooting](MCP_INSPECTOR_TROUBLESHOOTING.md) - Fix connection issues
+- [Azure Functions Guide](README_AZURE_FUNCTIONS.md) - Deployment guide
 - [Migration Guide](MIGRATION_GUIDE.md) - Migration from console app
 - [Quick Start](QUICKSTART.md) - 5-minute setup guide
 - [Conversion Summary](CONVERSION_SUMMARY.md) - Complete conversion details
@@ -239,4 +211,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Built with native MCP protocol support and streaming HTTP endpoints** ??
+**Built with native MCP protocol support** ??
