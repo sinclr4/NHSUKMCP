@@ -470,6 +470,84 @@ if (runInCloudMode && webBuilder != null)
         });
     });
     
+    // SSE endpoint for streaming health topic sections
+    app.MapGet("/api/stream/health/{topic}", async (HttpContext context, string topic) =>
+    {
+        if (searchService == null)
+        {
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsync("API Management service not configured");
+            return;
+        }
+        
+        if (string.IsNullOrWhiteSpace(topic))
+        {
+            context.Response.StatusCode = 400;
+            await context.Response.WriteAsync("Topic parameter is required");
+            return;
+        }
+        
+        // Set SSE headers
+        context.Response.Headers["Content-Type"] = "text/event-stream";
+        context.Response.Headers["Cache-Control"] = "no-cache";
+        context.Response.Headers["Connection"] = "keep-alive";
+        
+        logger.LogInformation("GET /api/stream/health/{Topic} (SSE)", topic);
+        
+        try
+        {
+            var result = await searchService.GetHealthTopicAsync(topic.Trim().ToLower());
+            
+            if (result == null)
+            {
+                await context.Response.WriteAsync($"event: error\n");
+                await context.Response.WriteAsync($"data: {{\"success\":false,\"error\":\"Health topic '{topic}' not found\"}}\n\n");
+                await context.Response.Body.FlushAsync();
+                return;
+            }
+            
+            // Send metadata first
+            await context.Response.WriteAsync("event: metadata\n");
+            await context.Response.WriteAsync($"data: {{\"name\":\"{result.Name}\",\"description\":\"{result.Description?.Replace("\"", "\\\"")}\",\"sectionCount\":{result.Sections?.Count ?? 0}}}\n\n");
+            await context.Response.Body.FlushAsync();
+            
+            // Stream each section
+            if (result.Sections != null)
+            {
+                for (int i = 0; i < result.Sections.Count; i++)
+                {
+                    var section = result.Sections[i];
+                    var sectionJson = JsonSerializer.Serialize(new
+                    {
+                        index = i,
+                        headline = section.Headline,
+                        text = section.Text,
+                        description = section.Description
+                    });
+                    
+                    await context.Response.WriteAsync("event: section\n");
+                    await context.Response.WriteAsync($"data: {sectionJson}\n\n");
+                    await context.Response.Body.FlushAsync();
+                    
+                    // Small delay to demonstrate streaming (remove in production if not needed)
+                    await Task.Delay(50);
+                }
+            }
+            
+            // Send completion event
+            await context.Response.WriteAsync("event: complete\n");
+            await context.Response.WriteAsync("data: {\"success\":true}\n\n");
+            await context.Response.Body.FlushAsync();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error streaming health topic");
+            await context.Response.WriteAsync("event: error\n");
+            await context.Response.WriteAsync($"data: {{\"success\":false,\"error\":\"{ex.Message}\"}}\n\n");
+            await context.Response.Body.FlushAsync();
+        }
+    });
+    
     logger.LogInformation("Starting HTTP API on port 8080");
     logger.LogInformation("Available endpoints:");
     logger.LogInformation("  GET /healthz - Health check");
@@ -480,6 +558,7 @@ if (runInCloudMode && webBuilder != null)
     logger.LogInformation("  GET /api/search/postcode?organisationType={{type}}&postcode={{postcode}}&maxResults={{n}}");
     logger.LogInformation("  GET /api/search/coordinates?organisationType={{type}}&latitude={{lat}}&longitude={{lon}}&maxResults={{n}}");
     logger.LogInformation("  GET /api/health/{{topic}} - Get health condition information");
+    logger.LogInformation("  GET /api/stream/health/{{topic}} - Stream health condition sections (SSE)");
     
     await app.RunAsync();
 }
