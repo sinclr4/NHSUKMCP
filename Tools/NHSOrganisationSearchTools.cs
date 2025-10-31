@@ -1,5 +1,4 @@
-using System.ComponentModel;
-using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using NHSUKMCP.Models;
 using NHSUKMCP.Services;
@@ -12,250 +11,149 @@ namespace NHSUKMCP.Tools;
 [McpServerToolType]
 public class NHSOrganisationSearchTools
 {
-    private readonly AzureSearchService? _searchService;
-    private readonly ILogger<NHSOrganisationSearchTools> _logger;
+    private readonly AzureSearchService _searchService;
 
-    // Constructor with Azure Search service (preferred when service is registered)
-    public NHSOrganisationSearchTools(ILogger<NHSOrganisationSearchTools> logger, AzureSearchService searchService)
+    public NHSOrganisationSearchTools(AzureSearchService searchService)
     {
         _searchService = searchService;
-        _logger = logger;
-    }
-
-    // Fallback constructor without Azure Search service
-    public NHSOrganisationSearchTools(ILogger<NHSOrganisationSearchTools> logger)
-    {
-        _searchService = null;
-        _logger = logger;
     }
 
     /// <summary>
-    /// Get list of available NHS organisation types
+    /// Get a list of all available NHS organisation types
     /// </summary>
-    /// <returns>Dictionary of organisation type codes and descriptions</returns>
     [McpServerTool(Name = "get_organisation_types")]
-    [Description("Get a list of all available NHS organisation types with their descriptions")]
-    public Dictionary<string, string> GetOrganisationTypes()
+    public Task<Dictionary<string, string>> GetOrganisationTypesAsync()
     {
-        try
-        {
-            _logger.LogInformation("Retrieving NHS organisation types - START");
-            var result = OrganisationTypes.Types;
-            _logger.LogInformation("Retrieved {Count} organisation types successfully", result.Count);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving organisation types");
-            throw;
-        }
+     return Task.FromResult(OrganisationTypes.Types);
     }
 
     /// <summary>
     /// Convert a UK postcode to latitude and longitude coordinates
     /// </summary>
-    /// <param name="postcode">UK postcode (e.g., 'SW1A 1AA')</param>
-    /// <returns>Coordinates for the postcode</returns>
+    /// <param name="postcode">UK postcode (e.g., 'SW1A 1AA', 'M1 1AE', 'B1 1AA')</param>
     [McpServerTool(Name = "convert_postcode_to_coordinates")]
-    [Description("Convert a UK postcode to latitude and longitude coordinates using Azure Search")]
-    public async Task<PostcodeResult?> ConvertPostcodeToCoordinates(
-        [Description("UK postcode to convert (e.g., 'SW1A 1AA')")] string postcode)
+    public async Task<object> ConvertPostcodeToCoordinatesAsync(string postcode)
     {
-        if (string.IsNullOrWhiteSpace(postcode))
+    if (string.IsNullOrWhiteSpace(postcode))
         {
-            throw new ArgumentException("Postcode cannot be empty", nameof(postcode));
+      throw new ArgumentException("Postcode is required", nameof(postcode));
         }
 
-        if (_searchService == null)
+        var result = await _searchService.GetPostcodeCoordinatesAsync(postcode);
+        
+        if (result == null)
         {
-            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration.");
+ throw new InvalidOperationException($"Postcode '{postcode}' not found");
         }
 
-        _logger.LogInformation("Converting postcode {Postcode} to coordinates", postcode);
-        return await _searchService.GetPostcodeCoordinatesAsync(postcode.Trim());
+  return new
+        {
+       postcode = postcode,
+        latitude = result.Latitude,
+        longitude = result.Longitude
+      };
     }
 
     /// <summary>
-    /// Search for NHS organisations by type and postcode
+    /// Search for NHS organisations near a postcode. Returns organisations sorted by distance.
     /// </summary>
-    /// <param name="organisationType">NHS organisation type code (e.g., 'PHA' for Pharmacy)</param>
-    /// <param name="postcode">UK postcode to search near</param>
+    /// <param name="organisationType">Type of organisation to search for (e.g., 'PHA' for Pharmacy, 'GPB' for GP, 'HOS' for Hospital). Use get_organisation_types to see all available types.</param>
+    /// <param name="postcode">UK postcode to search near (e.g., 'SW1A 1AA')</param>
     /// <param name="maxResults">Maximum number of results to return (default: 10)</param>
-    /// <returns>List of NHS organisations near the specified postcode</returns>
     [McpServerTool(Name = "search_organisations_by_postcode")]
-    [Description("Search for NHS organisations by type and postcode. First converts postcode to coordinates, then searches for nearby organisations.")]
-    public async Task<object> SearchOrganisationsByPostcode(
-        [Description("NHS organisation type code (e.g., 'PHA', 'GPP', 'HOS'). Use GetOrganisationTypes to see all available types.")] string organisationType,
-        [Description("UK postcode to search near (e.g., 'SW1A 1AA')")] string postcode,
-        [Description("Maximum number of results to return (1-50, default: 10)")] int maxResults = 10)
+    public async Task<object> SearchOrganisationsByPostcodeAsync(
+        string organisationType,
+        string postcode,
+      int maxResults = 10)
     {
-        if (string.IsNullOrWhiteSpace(organisationType))
+  if (string.IsNullOrWhiteSpace(organisationType))
         {
-            throw new ArgumentException("Organisation type cannot be empty", nameof(organisationType));
-        }
+  throw new ArgumentException("Organisation type is required", nameof(organisationType));
+}
 
         if (string.IsNullOrWhiteSpace(postcode))
         {
-            throw new ArgumentException("Postcode cannot be empty", nameof(postcode));
+        throw new ArgumentException("Postcode is required", nameof(postcode));
         }
 
-        if (maxResults < 1 || maxResults > 50)
+  var orgType = organisationType.ToUpper();
+    if (!OrganisationTypes.Types.ContainsKey(orgType))
         {
-            throw new ArgumentException("Max results must be between 1 and 50", nameof(maxResults));
+            throw new ArgumentException($"Invalid organisation type '{organisationType}'. Use get_organisation_types to see valid types.", nameof(organisationType));
         }
 
-        // Validate organisation type
-        if (!OrganisationTypes.Types.ContainsKey(organisationType.ToUpper()))
+        // Convert postcode to coordinates
+ var coordinates = await _searchService.GetPostcodeCoordinatesAsync(postcode);
+        if (coordinates == null)
         {
-            var availableTypes = string.Join(", ", OrganisationTypes.Types.Keys);
-            throw new ArgumentException($"Invalid organisation type '{organisationType}'. Available types: {availableTypes}", nameof(organisationType));
-        }
+            throw new InvalidOperationException($"Postcode '{postcode}' not found");
+    }
 
-        if (_searchService == null)
-        {
-            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration and set the API_MANAGEMENT_SUBSCRIPTION_KEY environment variable.");
-        }
+        // Search organisations
+        var organisations = await _searchService.SearchOrganisationsAsync(
+   orgType,
+         coordinates.Latitude,
+ coordinates.Longitude,
+         maxResults);
 
-        _logger.LogInformation("Searching for {OrganisationType} organisations near postcode {Postcode}", 
-            organisationType, postcode);
-
-        try
-        {
-            // First, convert postcode to coordinates
-            var coordinates = await _searchService.GetPostcodeCoordinatesAsync(postcode.Trim());
-            if (coordinates == null)
-            {
-                return new
-                {
-                    success = false,
-                    error = $"Could not find coordinates for postcode '{postcode}'. Please check the postcode is valid.",
-                    postcode = postcode,
-                    organisationType = organisationType
-                };
-            }
-
-            // Then search for organisations
-            var organisations = await _searchService.SearchOrganisationsAsync(
-                organisationType.ToUpper(), 
-                coordinates.Latitude, 
-                coordinates.Longitude, 
-                maxResults);
-
-            return new
-            {
-                success = true,
-                postcode = postcode,
-                coordinates = new
-                {
-                    latitude = coordinates.Latitude,
-                    longitude = coordinates.Longitude
-                },
-                organisationType = organisationType,
-                organisationTypeDescription = OrganisationTypes.Types[organisationType.ToUpper()],
-                resultCount = organisations.Count,
-                organisations = organisations
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error searching for organisations");
-            return new
-            {
-                success = false,
-                error = $"Search failed: {ex.Message}",
-                postcode = postcode,
-                organisationType = organisationType
-            };
-        }
+        return new
+ {
+            postcode = postcode,
+   coordinates = new
+   {
+                latitude = coordinates.Latitude,
+  longitude = coordinates.Longitude
+          },
+       organisationType = orgType,
+    organisationTypeDescription = OrganisationTypes.Types[orgType],
+ resultCount = organisations.Count,
+ organisations = organisations
+        };
     }
 
     /// <summary>
-    /// Search for NHS organisations by type and coordinates
+    /// Search for NHS organisations near specific coordinates. Returns organisations sorted by distance.
     /// </summary>
-    /// <param name="organisationType">NHS organisation type code (e.g., 'PHA' for Pharmacy)</param>
-    /// <param name="latitude">Latitude coordinate</param>
-    /// <param name="longitude">Longitude coordinate</param>
+    /// <param name="organisationType">Type of organisation to search for (e.g., 'PHA' for Pharmacy, 'GPB' for GP, 'HOS' for Hospital)</param>
+    /// <param name="latitude">Latitude coordinate (e.g., 51.5074)</param>
+    /// <param name="longitude">Longitude coordinate (e.g., -0.1278)</param>
     /// <param name="maxResults">Maximum number of results to return (default: 10)</param>
-    /// <returns>List of NHS organisations near the specified coordinates</returns>
-    [McpServerTool(Name = "search_organisations_by_coordinates")]
-    [Description("Search for NHS organisations by type and coordinates (latitude/longitude)")]
-    public async Task<object> SearchOrganisationsByCoordinates(
-        [Description("NHS organisation type code (e.g., 'PHA', 'GPP', 'HOS'). Use GetOrganisationTypes to see all available types.")] string organisationType,
-        [Description("Latitude coordinate")] double latitude,
-        [Description("Longitude coordinate")] double longitude,
-        [Description("Maximum number of results to return (1-50, default: 10)")] int maxResults = 10)
+[McpServerTool(Name = "search_organisations_by_coordinates")]
+    public async Task<object> SearchOrganisationsByCoordinatesAsync(
+        string organisationType,
+        double latitude,
+    double longitude,
+        int maxResults = 10)
     {
-        if (string.IsNullOrWhiteSpace(organisationType))
+if (string.IsNullOrWhiteSpace(organisationType))
         {
-            throw new ArgumentException("Organisation type cannot be empty", nameof(organisationType));
+        throw new ArgumentException("Organisation type is required", nameof(organisationType));
         }
 
-        if (maxResults < 1 || maxResults > 50)
+        var orgType = organisationType.ToUpper();
+        if (!OrganisationTypes.Types.ContainsKey(orgType))
         {
-            throw new ArgumentException("Max results must be between 1 and 50", nameof(maxResults));
-        }
+    throw new ArgumentException($"Invalid organisation type '{organisationType}'. Use get_organisation_types to see valid types.", nameof(organisationType));
+   }
 
-        if (latitude < -90 || latitude > 90)
+        // Search organisations
+        var organisations = await _searchService.SearchOrganisationsAsync(
+       orgType,
+            latitude,
+    longitude,
+  maxResults);
+
+   return new
+    {
+            coordinates = new
         {
-            throw new ArgumentException("Latitude must be between -90 and 90", nameof(latitude));
-        }
-
-        if (longitude < -180 || longitude > 180)
-        {
-            throw new ArgumentException("Longitude must be between -180 and 180", nameof(longitude));
-        }
-
-        // Validate organisation type
-        if (!OrganisationTypes.Types.ContainsKey(organisationType.ToUpper()))
-        {
-            var availableTypes = string.Join(", ", OrganisationTypes.Types.Keys);
-            throw new ArgumentException($"Invalid organisation type '{organisationType}'. Available types: {availableTypes}", nameof(organisationType));
-        }
-
-        if (_searchService == null)
-        {
-            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration and set the API_MANAGEMENT_SUBSCRIPTION_KEY environment variable.");
-        }
-
-        _logger.LogInformation("Searching for {OrganisationType} organisations near {Latitude}, {Longitude}", 
-            organisationType, latitude, longitude);
-
-        try
-        {
-            var organisations = await _searchService.SearchOrganisationsAsync(
-                organisationType.ToUpper(), 
-                latitude, 
-                longitude, 
-                maxResults);
-
-            return new
-            {
-                success = true,
-                coordinates = new
-                {
-                    latitude = latitude,
-                    longitude = longitude
-                },
-                organisationType = organisationType,
-                organisationTypeDescription = OrganisationTypes.Types[organisationType.ToUpper()],
-                resultCount = organisations.Count,
-                organisations = organisations
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error searching for organisations");
-            return new
-            {
-                success = false,
-                error = $"Search failed: {ex.Message}",
-                coordinates = new
-                {
-                    latitude = latitude,
-                    longitude = longitude
-                },
-                organisationType = organisationType
-            };
-        }
+  latitude = latitude,
+         longitude = longitude
+            },
+     organisationType = orgType,
+  organisationTypeDescription = OrganisationTypes.Types[orgType],
+            resultCount = organisations.Count,
+            organisations = organisations
+        };
     }
 }

@@ -1,196 +1,242 @@
-# NHS Organisations MCP Server
+# NHS Organisations MCP Server - Azure Functions
 
-This is a .NET Model Context Protocol (MCP) server that enables searching for NHS organizations by type and location using Azure API Management.
+This is an **Azure Functions** implementation that provides Model Context Protocol (MCP) tools via both native JSON-RPC and streamable HTTP endpoints for searching NHS organizations and health information.
 
-## Features
+## ?? Quick Start
 
-The server provides the following MCP tools:
+### Prerequisites
 
-### 1. GetOrganisationTypes
-- **Description**: Get a list of all available NHS organization types with their descriptions
-- **Parameters**: None
-- **Returns**: Dictionary of organization type codes and descriptions
+- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Azure Functions Core Tools v4](https://docs.microsoft.com/azure/azure-functions/functions-run-local)
+- Azure API Management subscription key
 
-### 2. ConvertPostcodeToCoordinates
-- **Description**: Convert a UK postcode to latitude and longitude coordinates
-- **Parameters**: 
-  - `postcode` (string): UK postcode (e.g., 'SW1A 1AA')
-- **Returns**: Coordinates for the postcode
+### Local Development
 
-### 3. SearchOrganisationsByPostcode
-- **Description**: Search for NHS organizations by type and postcode
-- **Parameters**:
-  - `organizationType` (string): NHS organization type code (e.g., 'PHA', 'GPP', 'HOS')
-  - `postcode` (string): UK postcode to search near
-  - `maxResults` (int, optional): Maximum number of results (default: 10, max: 50)
-- **Returns**: List of NHS organizations near the specified postcode
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/sinclr4/NHSUKMCP.git
+   cd NHSUKMCP
+   ```
 
-### 4. SearchOrganisationsByCoordinates
-- **Description**: Search for NHS organizations by type and coordinates
-- **Parameters**:
-  - `organizationType` (string): NHS organization type code
-  - `latitude` (double): Latitude coordinate
-  - `longitude` (double): Longitude coordinate
-  - `maxResults` (int, optional): Maximum number of results (default: 10, max: 50)
-- **Returns**: List of NHS organizations near the specified coordinates
+2. **Configure settings**:
+ Create/update `local.settings.json`:
+   ```json
+{
+     "IsEncrypted": false,
+     "Values": {
+  "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+"FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+     "API_MANAGEMENT_ENDPOINT": "https://nhsuk-apim-int-uks.azure-api.net/service-search",
+     "API_MANAGEMENT_SUBSCRIPTION_KEY": "your-subscription-key-here"
+   }
+   }
+   ```
 
-## Supported Organisation Types
+3. **Run locally**:
+   ```bash
+   func start
+   ```
+
+4. **Test endpoints**:
+   ```bash
+   # MCP JSON-RPC (Native Protocol)
+   curl -X POST http://localhost:7071/mcp \
+     -H "Content-Type: application/json" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+
+   # Or use SSE streaming endpoints
+   curl http://localhost:7071/mcp/tools/get_organisation_types
+
+   # Or use the test scripts
+   ./test-mcp-jsonrpc.sh    # Test JSON-RPC
+   ./test-functions.sh      # Test SSE endpoints
+   ```
+
+## ?? Features
+
+- ? **Native MCP Protocol**: JSON-RPC 2.0 implementation (`/mcp` endpoint)
+- ? **SSE Streaming**: Server-Sent Events for progressive data delivery
+- ? **Dual Interface**: Both JSON-RPC and HTTP/SSE endpoints
+- ? **Tool Discovery**: MCP `tools/list` and REST `/mcp/tools`
+- ? **Organisation Search**: Find NHS organizations by postcode or coordinates
+- ? **Organisation Types**: Get all available NHS organization types
+- ? **Postcode Conversion**: Convert UK postcodes to latitude/longitude
+- ? **Health Information**: Retrieve detailed NHS health topic information
+- ? **GET & POST Support**: SSE endpoints support both HTTP methods
+
+## ?? API Endpoints
+
+### MCP JSON-RPC Endpoint (Native Protocol)
+
+**POST** `/mcp`
+
+Native Model Context Protocol implementation with JSON-RPC 2.0.
+
+```bash
+# Initialize
+curl -X POST http://localhost:7071/mcp \
+-H "Content-Type: application/json" \
+-d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+"method": "initialize",
+    "params": {"protocolVersion": "2024-11-05"}
+  }'
+
+# List tools
+curl -X POST http://localhost:7071/mcp \
+  -H "Content-Type: application/json" \
+-d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{} }'
+
+# Call a tool
+curl -X POST http://localhost:7071/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 3,
+   "method": "tools/call",
+    "params": {
+      "name": "search_organisations_by_postcode",
+      "arguments": {"organisationType":"PHA","postcode":"SW1A 1AA","maxResults":5}
+  }
+  }'
+```
+
+?? **Full MCP JSON-RPC Documentation**: [MCP_JSON_RPC_GUIDE.md](MCP_JSON_RPC_GUIDE.md)
+
+### SSE Streaming Endpoints (HTTP/REST)
+
+Alternative HTTP endpoints with Server-Sent Events for streaming.
+
+**GET** `/mcp/tools/get_organisation_types` - Returns all NHS organisation types
+**GET/POST** `/mcp/tools/convert_postcode_to_coordinates` - Convert postcode
+**GET/POST** `/mcp/tools/search_organisations_by_postcode` - Search by postcode
+**GET/POST** `/mcp/tools/search_organisations_by_coordinates` - Search by coordinates
+**GET/POST** `/mcp/tools/get_health_topic` - Get health information
+
+```bash
+# Example SSE request
+curl -N "http://localhost:7071/mcp/tools/search_organisations_by_postcode?organisationType=PHA&postcode=SW1A%201AA&maxResults=5"
+```
+
+?? **Full SSE Documentation**: [README_AZURE_FUNCTIONS.md](README_AZURE_FUNCTIONS.md)
+
+## ?? Organisation Types
 
 | Code | Description |
 |------|-------------|
-| CCG  | Clinical Commissioning Group |
-| CLI  | Clinics |
-| DEN  | Dentists |
-| GDOS | Generic Directory of Services |
-| GPB  | GP |
-| GPP  | GP Practice |
-| GSD  | Generic Service Directory |
-| HA   | Health Authority |
-| HOS  | Hospital |
-| HWB  | Health and Wellbeing Board |
-| LA   | Local Authority |
-| LAT  | Area Team |
-| MIU  | Minor Injury Unit |
-| OPT  | Optician |
-| PHA  | Pharmacy |
-| RAT  | Regional Area Team |
-| SCL  | Social Care Provider Location |
-| SCP  | Social Care Provider |
-| SHA  | Strategic Health Authority |
-| STP  | Sustainability and Transformation Partnership |
-| TRU  | Trust |
-| UC   | Urgent Care |
-| UNK  | UNKNOWN |
+| CCG | Clinical Commissioning Group |
+| CLI | Clinics |
+| DEN | Dentists |
+| GPB | GP |
+| GPP | GP Practice |
+| HOS | Hospital |
+| MIU | Minor Injury Unit |
+| OPT | Optician |
+| PHA | Pharmacy |
+| UC | Urgent Care |
 
-## Prerequisites
+## ?? Response Formats
 
-- .NET 9.0 or later
-- Azure Search API access with NHS data (optional for some features)
+### JSON-RPC Format (MCP Native)
 
-## Features Availability
-
-✅ **Always Available** (no Azure Search required):
-- `get_organisation_types` - List all NHS organization types
-
-❌ **Requires Azure Search Configuration**:
-- `convert_postcode_to_coordinates` - Convert postcode to coordinates
-- `search_organisations_by_postcode` - Search organizations near a postcode
-- `search_organisations_by_coordinates` - Search organizations by coordinates
-
-See [AZURE_SETUP.md](AZURE_SETUP.md) for Azure Search configuration instructions.
-
-## Setup and Running
-
-### 1. Clone and Build
-
-```bash
-git clone <repository-url>
-cd NHSUKMCP
-dotnet restore
-dotnet build
-```
-
-### 2. Run the Server
-
-```bash
-dotnet run
-```
-
-The server will start and listen for MCP protocol messages via standard input/output.
-
-### 3. Configure in Claude Desktop
-
-Add this server to your Claude Desktop configuration file (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
-
-**Basic Configuration** (only `get_organisation_types` will work):
 ```json
 {
-  "mcpServers": {
-    "nhs-organizations-mcp-server": {
-      "command": "/path/to/NHSUKMCP/publish/NHSUKMCP"
-    }
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {"type": "text", "text": "{\"organisations\":[...]}"}
+    ]
   }
 }
 ```
 
-**Full Configuration** (with API Management for all features):
-```json
-{
-  "mcpServers": {
-    "nhs-organizations-mcp-server": {
-      "command": "/path/to/NHSUKMCP/publish/NHSUKMCP",
-      "env": {
-        "API_MANAGEMENT_ENDPOINT": "https://nhsuk-apim-int-uks.azure-api.net/service-search",
-        "API_MANAGEMENT_SUBSCRIPTION_KEY": "your-subscription-key-here"
-      }
-    }
-  }
-}
+### SSE Format (Streaming)
+
+```
+event: metadata
+data: {"postcode":"SW1A 1AA"}
+
+event: organisation
+data: {"organisationName":"Boots Pharmacy",...}
+
+event: complete
+data: {"success":true}
 ```
 
-**Important**: Replace `/path/to/NHSUKMCP` with the actual absolute path to your project directory.
+## ?? Deploy to Azure
 
-See [AZURE_SETUP.md](AZURE_SETUP.md) for detailed Azure Search configuration instructions.
-
-## Architecture
-
-The server is built using:
-
-- **.NET 9**: Core runtime and libraries
-- **ModelContextProtocol**: MCP SDK for .NET
-- **Microsoft.Extensions.Hosting**: Dependency injection and hosting
-- **Azure API Management**: Backend service for NHS data search
-
-### Key Components
-
-1. **Models/Models.cs**: Data models for API Management configuration, organization types, and results
-2. **Services/AzureSearchService.cs**: Service for interacting with Azure API Management
-3. **Tools/NHSOrganisationTools.cs**: MCP tools that expose the search functionality
-4. **Program.cs**: Application entry point and DI configuration
-
-## Configuration
-
-The API Management configuration uses environment variables:
-
-- **Endpoint**: <https://nhsuk-apim-int-uks.azure-api.net/service-search>
-- **Subscription Key**: Provided via API_MANAGEMENT_SUBSCRIPTION_KEY environment variable
-- **Postcode Endpoint**: /postcodesandplaces/?search={postcode}&api-version=2
-- **Search Endpoint**: /search?api-version=2
-
-## Usage Examples
-
-### Example 1: Find nearby pharmacies
-```
-User: "Find pharmacies near postcode SW1A 1AA"
-1. Call GetOrganisationTypes() to understand available types
-2. Call SearchOrganisationsByPostcode("PHA", "SW1A 1AA", 10)
+```bash
+# Run the deployment script
+chmod +x deploy-functions.sh
+./deploy-functions.sh <resource-group> <function-app-name> <location>
 ```
 
-### Example 2: Find hospitals by coordinates
+See [README_AZURE_FUNCTIONS.md](README_AZURE_FUNCTIONS.md) for detailed deployment instructions.
+
+## ?? Testing
+
+```bash
+# Test MCP JSON-RPC protocol
+./test-mcp-jsonrpc.sh http://localhost:7071
+# or
+.\test-mcp-jsonrpc.ps1 "http://localhost:7071"
+
+# Test SSE streaming endpoints
+./test-functions.sh http://localhost:7071
+# or
+.\test-functions.ps1 "http://localhost:7071"
 ```
-User: "Find hospitals near latitude 51.5074, longitude -0.1278"
-1. Call SearchOrganisationsByCoordinates("HOS", 51.5074, -0.1278, 5)
+
+## ?? Project Structure
+
+```
+NHSUKMCP/
+??? Functions/
+?   ??? McpJsonRpcFunctions.cs  # MCP JSON-RPC endpoint
+?   ??? McpFunctions.cs   # SSE streaming endpoints
+??? Tools/
+?   ??? NHSOrganisationSearchTools.cs  # MCP tool implementations
+?   ??? NHSHealthContentTools.cs       # Health content tools
+??? Models/
+?   ??? Models.cs                # Data models
+??? Services/
+?   ??? AzureSearchService.cs    # API Management integration
+??? Program.cs         # Azure Functions host
+??? host.json      # Functions configuration
+??? test-mcp-jsonrpc.sh          # JSON-RPC tests (Bash)
+??? test-mcp-jsonrpc.ps1    # JSON-RPC tests (PowerShell)
+??? test-functions.sh   # SSE tests (Bash)
+??? test-functions.ps1  # SSE tests (PowerShell)
 ```
 
-## Error Handling
+## ?? Which Endpoint Should I Use?
 
-The server includes comprehensive error handling:
-- Invalid postcode validation
-- Organisation type validation
-- Coordinate range validation
-- Azure Search API error handling
-- Structured error responses
+### Use MCP JSON-RPC (`/mcp`) when:
+- ? Building MCP-compliant clients
+- ? Need native protocol integration
+- ? Want standard tool calling
+- ? Building AI agents or assistants
 
-## Logging
+### Use SSE Endpoints (`/mcp/tools/*`) when:
+- ? Building web UIs
+- ? Need progressive/streaming responses
+- ? Want simple HTTP GET/POST
+- ? Browser-based applications
 
-All operations are logged to stderr using the Microsoft.Extensions.Logging framework, making it compatible with MCP protocol requirements.
+## ?? Documentation
 
-## Development
+- [MCP JSON-RPC Guide](MCP_JSON_RPC_GUIDE.md) - Native MCP protocol usage
+- [Azure Functions Guide](README_AZURE_FUNCTIONS.md) - SSE streaming endpoints
+- [Migration Guide](MIGRATION_GUIDE.md) - Migration from console app
+- [Quick Start](QUICKSTART.md) - 5-minute setup guide
+- [Conversion Summary](CONVERSION_SUMMARY.md) - Complete conversion details
 
-To extend the server:
+## ?? License
 
-1. Add new tools to `Tools/NHSOrganisationTools.cs`
-2. Implement additional Azure Search functionality in `Services/AzureSearchService.cs`
-3. Add new data models to `Models/Models.cs` as needed
+MIT License - see LICENSE file for details.
 
-The server follows MCP best practices and .NET conventions for maintainable, extensible code.
+---
+
+**Built with native MCP protocol support and streaming HTTP endpoints** ??

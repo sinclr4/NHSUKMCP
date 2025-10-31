@@ -1,5 +1,3 @@
-using System.ComponentModel;
-using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using NHSUKMCP.Services;
 
@@ -11,89 +9,51 @@ namespace NHSUKMCP.Tools;
 [McpServerToolType]
 public class NHSHealthContentTools
 {
-    private readonly AzureSearchService? _searchService;
-    private readonly ILogger<NHSHealthContentTools> _logger;
+    private readonly AzureSearchService _searchService;
 
-    // Constructor with Azure Search service (preferred when service is registered)
-    public NHSHealthContentTools(ILogger<NHSHealthContentTools> logger, AzureSearchService searchService)
+    public NHSHealthContentTools(AzureSearchService searchService)
     {
-        _searchService = searchService;
-        _logger = logger;
-    }
-
-    // Fallback constructor without Azure Search service
-    public NHSHealthContentTools(ILogger<NHSHealthContentTools> logger)
-    {
-        _searchService = null;
-        _logger = logger;
+     _searchService = searchService;
     }
 
     /// <summary>
-    /// Get detailed information about a specific health condition or topic from the NHS API
+    /// Get detailed information about a specific health condition or topic from the NHS API.
+    /// Returns comprehensive information including description, content sections, and last reviewed date.
     /// </summary>
-    /// <param name="topic">The health topic to retrieve (e.g., 'asthma', 'diabetes', 'flu', 'covid-19')</param>
-    /// <returns>Health topic information including name, description, content sections, and last reviewed date</returns>
+    /// <param name="topic">Health topic slug (e.g., 'asthma', 'diabetes', 'flu', 'covid-19', 'heart-disease', 'stroke', 'cancer', 'depression', 'anxiety')</param>
     [McpServerTool(Name = "get_health_topic")]
-    [Description("Get detailed information about a specific health condition or topic from the NHS API. Returns comprehensive information including description, content sections, and last reviewed date.")]
-    public async Task<object> GetHealthTopic(
-        [Description("Health topic slug (e.g., 'asthma', 'diabetes', 'flu', 'covid-19', 'heart-disease', 'stroke', 'cancer', 'depression', 'anxiety')")] string topic)
+public async Task<object> GetHealthTopicAsync(string topic)
     {
-        if (string.IsNullOrWhiteSpace(topic))
+   if (string.IsNullOrWhiteSpace(topic))
         {
-            throw new ArgumentException("Topic cannot be empty", nameof(topic));
+    throw new ArgumentException("Topic parameter is required", nameof(topic));
         }
 
-        if (_searchService == null)
-        {
-            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration.");
+        var result = await _searchService.GetHealthTopicAsync(topic.Trim().ToLower());
+
+        if (result == null)
+     {
+            throw new InvalidOperationException($"Health topic '{topic}' not found. Please check the topic name and try again.");
         }
 
-        _logger.LogInformation("Fetching health topic: {Topic}", topic);
-
-        try
+        // Format sections for better readability
+        var formattedSections = result.Sections?.Select(s => new
         {
-            var result = await _searchService.GetHealthTopicAsync(topic.Trim().ToLower());
-            
-            if (result == null)
-            {
-                return new
-                {
-                    success = false,
-                    error = $"Health topic '{topic}' not found. Please check the topic name and try again.",
-                    topic = topic
-                };
-            }
+   headline = s.Headline,
+            text = s.Text,
+            description = s.Description
+        }).ToList();
 
-            // Format sections for better readability
-            var formattedSections = result.Sections?.Select(s => new
-            {
-                headline = s.Headline,
-                text = s.Text != null && s.Text.Length > 500 ? s.Text.Substring(0, 500) + "..." : s.Text,
-                description = s.Description
-            }).ToList();
-
-            return new
-            {
-                success = true,
-                name = result.Name,
-                description = result.Description,
-                url = result.Url,
-                lastReviewed = result.LastReviewed,
-                dateModified = result.DateModified,
-                genre = result.Genre,
-                sectionCount = result.Sections?.Count ?? 0,
-                sections = formattedSections
-            };
-        }
-        catch (Exception ex)
+        return new
         {
-            _logger.LogError(ex, "Error fetching health topic");
-            return new
-            {
-                success = false,
-                error = $"Failed to retrieve health topic: {ex.Message}",
-                topic = topic
-            };
-        }
+        name = result.Name,
+          description = result.Description,
+            url = result.Url,
+            lastReviewed = result.LastReviewed,
+    dateModified = result.DateModified,
+       genre = result.Genre,
+  sectionCount = result.Sections?.Count ?? 0,
+            sections = formattedSections
+      };
     }
 }
