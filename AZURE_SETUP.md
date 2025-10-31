@@ -35,13 +35,13 @@ Update your `claude_desktop_config.json` to include the environment variables:
 
 ## Features Available Without Azure Search
 
-- ✅ `get_organization_types` - List all NHS organization types (works without Azure Search)
+- ✅ `get_organisation_types` - List all NHS organization types (works without Azure Search)
 
 ## Features Requiring Azure Search
 
 - ❌ `convert_postcode_to_coordinates` - Convert UK postcode to lat/long
-- ❌ `search_organizations_by_postcode` - Search organizations near a postcode
-- ❌ `search_organizations_by_coordinates` - Search organizations near coordinates
+- ❌ `search_organisations_by_postcode` - Search organizations near a postcode
+- ❌ `search_organisations_by_coordinates` - Search organizations near coordinates
 
 Without Azure Search configuration, these tools will return a helpful error message.
 
@@ -216,7 +216,7 @@ az containerapp update -n "$APP_NAME" -g "$RESOURCE_GROUP" --image $ACR_NAME.azu
 | LOG_LEVEL | No (defaults Information) | Adjust runtime logging threshold |
 | DOTNET_ENVIRONMENT | No | Set to Production for optimized behavior |
 
-If `AZURE_SEARCH_API_KEY` is missing, only `get_organization_types` will function.
+If `AZURE_SEARCH_API_KEY` is missing, only `get_organisation_types` will function.
 
 ## 7. Scaling Considerations
 

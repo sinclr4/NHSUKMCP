@@ -70,12 +70,12 @@ The server provides the following MCP tools:
 ## Features Availability
 
 ✅ **Always Available** (no Azure Search required):
-- `get_organization_types` - List all NHS organization types
+- `get_organisation_types` - List all NHS organization types
 
 ❌ **Requires Azure Search Configuration**:
 - `convert_postcode_to_coordinates` - Convert postcode to coordinates
-- `search_organizations_by_postcode` - Search organizations near a postcode
-- `search_organizations_by_coordinates` - Search organizations by coordinates
+- `search_organisations_by_postcode` - Search organizations near a postcode
+- `search_organisations_by_coordinates` - Search organizations by coordinates
 
 See [AZURE_SETUP.md](AZURE_SETUP.md) for Azure Search configuration instructions.
 
@@ -102,7 +102,7 @@ The server will start and listen for MCP protocol messages via standard input/ou
 
 Add this server to your Claude Desktop configuration file (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS):
 
-**Basic Configuration** (only `get_organization_types` will work):
+**Basic Configuration** (only `get_organisation_types` will work):
 ```json
 {
   "mcpServers": {

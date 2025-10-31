@@ -94,21 +94,21 @@ if (runInCloudMode && webBuilder != null)
     app.MapGet("/healthz", () => Results.Json(new { status = "ok" }));
     app.MapGet("/ready", () => Results.Json(new { status = "ready" }));
     
-    // API endpoint: Get organization types
-    app.MapGet("/api/organization-types", () =>
+    // API endpoint: Get organisation types
+    app.MapGet("/api/organisation-types", () =>
     {
         try
         {
-            logger.LogInformation("GET /api/organization-types");
+            logger.LogInformation("GET /api/organisation-types");
             return Results.Json(new
             {
                 success = true,
-                organizationTypes = OrganisationTypes.Types
+                organisationTypes = OrganisationTypes.Types
             });
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error getting organization types");
+            logger.LogError(ex, "Error getting organisation types");
             return Results.Json(new { success = false, error = ex.Message });
         }
     });
@@ -154,7 +154,7 @@ if (runInCloudMode && webBuilder != null)
     });
     
     // API endpoint: Search organizations by postcode
-    app.MapGet("/api/search/postcode", async (string organizationType, string postcode, int maxResults = 10) =>
+    app.MapGet("/api/search/postcode", async (string organisationType, string postcode, int maxResults = 10) =>
     {
         try
         {
@@ -167,17 +167,17 @@ if (runInCloudMode && webBuilder != null)
                 });
             }
             
-            var orgType = organizationType.ToUpper();
+            var orgType = organisationType.ToUpper();
             if (!OrganisationTypes.Types.ContainsKey(orgType))
             {
                 return Results.Json(new
                 {
                     success = false,
-                    error = $"Invalid organization type '{organizationType}'"
+                    error = $"Invalid organisation type '{organisationType}'"
                 });
             }
             
-            logger.LogInformation("GET /api/search/postcode?organizationType={OrgType}&postcode={Postcode}&maxResults={MaxResults}",
+            logger.LogInformation("GET /api/search/postcode?organisationType={OrgType}&postcode={Postcode}&maxResults={MaxResults}",
                 orgType, postcode, maxResults);
             
             // Convert postcode to coordinates
@@ -207,8 +207,8 @@ if (runInCloudMode && webBuilder != null)
                     latitude = coordinates.Latitude,
                     longitude = coordinates.Longitude
                 },
-                organizationType = orgType,
-                organizationTypeDescription = OrganisationTypes.Types[orgType],
+                organisationType = orgType,
+                organisationTypeDescription = OrganisationTypes.Types[orgType],
                 resultCount = organizations.Count,
                 organizations = organizations
             });
@@ -221,7 +221,7 @@ if (runInCloudMode && webBuilder != null)
     });
     
     // API endpoint: Search organizations by coordinates
-    app.MapGet("/api/search/coordinates", async (string organizationType, double latitude, double longitude, int maxResults = 10) =>
+    app.MapGet("/api/search/coordinates", async (string organisationType, double latitude, double longitude, int maxResults = 10) =>
     {
         try
         {
@@ -234,17 +234,17 @@ if (runInCloudMode && webBuilder != null)
                 });
             }
             
-            var orgType = organizationType.ToUpper();
+            var orgType = organisationType.ToUpper();
             if (!OrganisationTypes.Types.ContainsKey(orgType))
             {
                 return Results.Json(new
                 {
                     success = false,
-                    error = $"Invalid organization type '{organizationType}'"
+                    error = $"Invalid organisation type '{organisationType}'"
                 });
             }
             
-            logger.LogInformation("GET /api/search/coordinates?organizationType={OrgType}&latitude={Lat}&longitude={Lon}&maxResults={MaxResults}",
+            logger.LogInformation("GET /api/search/coordinates?organisationType={OrgType}&latitude={Lat}&longitude={Lon}&maxResults={MaxResults}",
                 orgType, latitude, longitude, maxResults);
             
             var organizations = await searchService.SearchOrganisationsAsync(
@@ -261,8 +261,8 @@ if (runInCloudMode && webBuilder != null)
                     latitude = latitude,
                     longitude = longitude
                 },
-                organizationType = orgType,
-                organizationTypeDescription = OrganisationTypes.Types[orgType],
+                organisationType = orgType,
+                organisationTypeDescription = OrganisationTypes.Types[orgType],
                 resultCount = organizations.Count,
                 organizations = organizations
             });
@@ -278,10 +278,10 @@ if (runInCloudMode && webBuilder != null)
     logger.LogInformation("Available endpoints:");
     logger.LogInformation("  GET /healthz - Health check");
     logger.LogInformation("  GET /ready - Readiness check");
-    logger.LogInformation("  GET /api/organization-types - List organization types");
+    logger.LogInformation("  GET /api/organisation-types - List organisation types");
     logger.LogInformation("  GET /api/postcode/{{postcode}} - Convert postcode to coordinates");
-    logger.LogInformation("  GET /api/search/postcode?organizationType={{type}}&postcode={{postcode}}&maxResults={{n}}");
-    logger.LogInformation("  GET /api/search/coordinates?organizationType={{type}}&latitude={{lat}}&longitude={{lon}}&maxResults={{n}}");
+    logger.LogInformation("  GET /api/search/postcode?organisationType={{type}}&postcode={{postcode}}&maxResults={{n}}");
+    logger.LogInformation("  GET /api/search/coordinates?organisationType={{type}}&latitude={{lat}}&longitude={{lon}}&maxResults={{n}}");
     
     await app.RunAsync();
 }
