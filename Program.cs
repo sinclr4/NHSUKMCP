@@ -471,7 +471,7 @@ if (runInCloudMode && webBuilder != null)
     });
     
     // SSE endpoint for streaming health topic sections
-    app.MapGet("/api/stream/health/{topic}", async (HttpContext context, string topic) =>
+    app.MapGet("/mcp/health/{topic}", async (HttpContext context, string topic) =>
     {
         if (searchService == null)
         {
@@ -492,7 +492,7 @@ if (runInCloudMode && webBuilder != null)
         context.Response.Headers["Cache-Control"] = "no-cache";
         context.Response.Headers["Connection"] = "keep-alive";
         
-        logger.LogInformation("GET /api/stream/health/{Topic} (SSE)", topic);
+        logger.LogInformation("GET /mcp/health/{Topic} (SSE)", topic);
         
         try
         {
@@ -558,7 +558,7 @@ if (runInCloudMode && webBuilder != null)
     logger.LogInformation("  GET /api/search/postcode?organisationType={{type}}&postcode={{postcode}}&maxResults={{n}}");
     logger.LogInformation("  GET /api/search/coordinates?organisationType={{type}}&latitude={{lat}}&longitude={{lon}}&maxResults={{n}}");
     logger.LogInformation("  GET /api/health/{{topic}} - Get health condition information");
-    logger.LogInformation("  GET /api/stream/health/{{topic}} - Stream health condition sections (SSE)");
+    logger.LogInformation("  GET /mcp/health/{{topic}} - Stream health condition sections (SSE)");
     
     await app.RunAsync();
 }
