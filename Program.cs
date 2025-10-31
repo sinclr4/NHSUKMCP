@@ -274,6 +274,76 @@ if (runInCloudMode && webBuilder != null)
         }
     });
     
+    // Health content endpoint
+    app.MapGet("/api/health/{topic}", async (string topic) =>
+    {
+        try
+        {
+            if (searchService == null)
+            {
+                return Results.Json(new
+                {
+                    success = false,
+                    error = "API Management service not configured"
+                });
+            }
+            
+            if (string.IsNullOrWhiteSpace(topic))
+            {
+                return Results.Json(new
+                {
+                    success = false,
+                    error = "Topic parameter is required"
+                });
+            }
+            
+            logger.LogInformation("GET /api/health/{Topic}", topic);
+            
+            var result = await searchService.GetHealthTopicAsync(topic.Trim().ToLower());
+            
+            if (result == null)
+            {
+                return Results.Json(new
+                {
+                    success = false,
+                    error = $"Health topic '{topic}' not found. Please check the topic name and try again.",
+                    topic = topic
+                });
+            }
+            
+            // Format sections for better readability
+            var formattedSections = result.Sections?.Select(s => new
+            {
+                headline = s.Headline,
+                text = s.Text != null && s.Text.Length > 500 ? s.Text.Substring(0, 500) + "..." : s.Text,
+                description = s.Description
+            }).ToList();
+            
+            return Results.Json(new
+            {
+                success = true,
+                name = result.Name,
+                description = result.Description,
+                url = result.Url,
+                lastReviewed = result.LastReviewed,
+                dateModified = result.DateModified,
+                genre = result.Genre,
+                sectionCount = result.Sections?.Count ?? 0,
+                sections = formattedSections
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error fetching health topic");
+            return Results.Json(new
+            {
+                success = false,
+                error = $"Failed to retrieve health topic: {ex.Message}",
+                topic = topic
+            });
+        }
+    });
+    
     logger.LogInformation("Starting HTTP API on port 8080");
     logger.LogInformation("Available endpoints:");
     logger.LogInformation("  GET /healthz - Health check");
@@ -282,6 +352,7 @@ if (runInCloudMode && webBuilder != null)
     logger.LogInformation("  GET /api/postcode/{{postcode}} - Convert postcode to coordinates");
     logger.LogInformation("  GET /api/search/postcode?organisationType={{type}}&postcode={{postcode}}&maxResults={{n}}");
     logger.LogInformation("  GET /api/search/coordinates?organisationType={{type}}&latitude={{lat}}&longitude={{lon}}&maxResults={{n}}");
+    logger.LogInformation("  GET /api/health/{{topic}} - Get health condition information");
     
     await app.RunAsync();
 }
