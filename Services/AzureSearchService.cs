@@ -315,7 +315,13 @@ public class AzureSearchService
                     if (section.TryGetProperty("description", out var sectionDescProp))
                         topicSection.Description = sectionDescProp.GetString();
 
-                    result.Sections.Add(topicSection);
+                    // Only add sections that have at least one non-empty field
+                    if (!string.IsNullOrWhiteSpace(topicSection.Headline) ||
+                        !string.IsNullOrWhiteSpace(topicSection.Text) ||
+                        !string.IsNullOrWhiteSpace(topicSection.Description))
+                    {
+                        result.Sections.Add(topicSection);
+                    }
                 }
             }
 
