@@ -77,7 +77,8 @@ if (!runInCloudMode)
         };
     })
     .WithStdioServerTransport()
-    .WithTools<NHSOrganizationTools>();
+    .WithTools<NHSOrganizationSearchTools>()
+    .WithTools<NHSHealthContentTools>();
 }
 
 // Build the application

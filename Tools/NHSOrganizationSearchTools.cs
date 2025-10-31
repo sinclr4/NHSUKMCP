@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using NHSOrgsMCP.Models;
@@ -11,20 +10,20 @@ namespace NHSOrgsMCP.Tools;
 /// MCP tools for searching NHS organizations
 /// </summary>
 [McpServerToolType]
-public class NHSOrganizationTools
+public class NHSOrganizationSearchTools
 {
     private readonly AzureSearchService? _searchService;
-    private readonly ILogger<NHSOrganizationTools> _logger;
+    private readonly ILogger<NHSOrganizationSearchTools> _logger;
 
     // Constructor with Azure Search service (preferred when service is registered)
-    public NHSOrganizationTools(ILogger<NHSOrganizationTools> logger, AzureSearchService searchService)
+    public NHSOrganizationSearchTools(ILogger<NHSOrganizationSearchTools> logger, AzureSearchService searchService)
     {
         _searchService = searchService;
         _logger = logger;
     }
 
     // Fallback constructor without Azure Search service
-    public NHSOrganizationTools(ILogger<NHSOrganizationTools> logger)
+    public NHSOrganizationSearchTools(ILogger<NHSOrganizationSearchTools> logger)
     {
         _searchService = null;
         _logger = logger;
@@ -114,7 +113,7 @@ public class NHSOrganizationTools
 
         if (_searchService == null)
         {
-            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration and set the AZURE_SEARCH_API_KEY environment variable.");
+            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration and set the API_MANAGEMENT_SUBSCRIPTION_KEY environment variable.");
         }
 
         _logger.LogInformation("Searching for {OrganizationType} organizations near postcode {Postcode}", 
@@ -215,7 +214,7 @@ public class NHSOrganizationTools
 
         if (_searchService == null)
         {
-            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration and set the AZURE_SEARCH_API_KEY environment variable.");
+            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration and set the API_MANAGEMENT_SUBSCRIPTION_KEY environment variable.");
         }
 
         _logger.LogInformation("Searching for {OrganizationType} organizations near {Latitude}, {Longitude}", 
@@ -256,75 +255,6 @@ public class NHSOrganizationTools
                     longitude = longitude
                 },
                 organizationType = organizationType
-            };
-        }
-    }
-
-    /// <summary>
-    /// Get detailed information about a specific health condition or topic from the NHS API
-    /// </summary>
-    /// <param name="topic">The health topic to retrieve (e.g., 'asthma', 'diabetes', 'flu', 'covid-19')</param>
-    /// <returns>Health topic information including name, description, content sections, and last reviewed date</returns>
-    [McpServerTool(Name = "get_health_topic")]
-    [Description("Get detailed information about a specific health condition or topic from the NHS API. Returns comprehensive information including description, content sections, and last reviewed date.")]
-    public async Task<object> GetHealthTopic(
-        [Description("Health topic slug (e.g., 'asthma', 'diabetes', 'flu', 'covid-19', 'heart-disease', 'stroke', 'cancer', 'depression', 'anxiety')")] string topic)
-    {
-        if (string.IsNullOrWhiteSpace(topic))
-        {
-            throw new ArgumentException("Topic cannot be empty", nameof(topic));
-        }
-
-        if (_searchService == null)
-        {
-            throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration.");
-        }
-
-        _logger.LogInformation("Fetching health topic: {Topic}", topic);
-
-        try
-        {
-            var result = await _searchService.GetHealthTopicAsync(topic.Trim().ToLower());
-            
-            if (result == null)
-            {
-                return new
-                {
-                    success = false,
-                    error = $"Health topic '{topic}' not found. Please check the topic name and try again.",
-                    topic = topic
-                };
-            }
-
-            // Format sections for better readability
-            var formattedSections = result.Sections?.Select(s => new
-            {
-                headline = s.Headline,
-                text = s.Text != null && s.Text.Length > 500 ? s.Text.Substring(0, 500) + "..." : s.Text,
-                description = s.Description
-            }).ToList();
-
-            return new
-            {
-                success = true,
-                name = result.Name,
-                description = result.Description,
-                url = result.Url,
-                lastReviewed = result.LastReviewed,
-                dateModified = result.DateModified,
-                genre = result.Genre,
-                sectionCount = result.Sections?.Count ?? 0,
-                sections = formattedSections
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error fetching health topic");
-            return new
-            {
-                success = false,
-                error = $"Failed to retrieve health topic: {ex.Message}",
-                topic = topic
             };
         }
     }
