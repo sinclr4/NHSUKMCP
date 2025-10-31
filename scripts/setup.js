@@ -26,7 +26,7 @@ console.log(`
 To complete installation:
 
 1. Build the .NET binary:
-   cd /Users/robsinclair/NHSOrgsMCP
+   cd /Users/robsinclair/NHSUKMCP
    dotnet publish -c Release -r <runtime-identifier>
 
    Runtime identifiers:

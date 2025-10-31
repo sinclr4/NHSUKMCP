@@ -1,4 +1,4 @@
-namespace NHSOrgsMCP.Models;
+namespace NHSUKMCP.Models;
 
 /// <summary>
 /// Configuration for API Management integration

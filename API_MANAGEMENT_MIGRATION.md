@@ -48,7 +48,7 @@ The NHS Organisations MCP Server has been updated to use Azure API Management in
 
 ### Files Updated
 
-#### .NET Version (`/Users/robsinclair/NHSOrgsMCP`)
+#### .NET Version (`/Users/robsinclair/NHSUKMCP`)
 
 1. **Services/AzureSearchService.cs**
    - Changed header from `api-key` to `subscription-key`
@@ -106,7 +106,7 @@ Before deployment, test with your actual API Management subscription key:
 #### .NET Version
 
 ```bash
-cd /Users/robsinclair/NHSOrgsMCP
+cd /Users/robsinclair/NHSUKMCP
 
 # Set environment variables
 export AZURE_SEARCH_ENDPOINT="https://nhsuk-apim-int-uks.azure-api.net/service-search"

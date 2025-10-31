@@ -4,10 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
-using NHSOrgsMCP.Models;
-using NHSOrgsMCP.Services;
-using NHSOrgsMCP.Tools;
-using NHSOrgsMCP;
+using NHSUKMCP.Models;
+using NHSUKMCP.Services;
+using NHSUKMCP.Tools;
+using NHSUKMCP;
 using System.Text.Json;
 
 // Check if running in Azure Container Apps (no stdin) or locally (with stdin)

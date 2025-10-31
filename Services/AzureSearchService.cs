@@ -1,8 +1,8 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using NHSOrgsMCP.Models;
+using NHSUKMCP.Models;
 
-namespace NHSOrgsMCP.Services;
+namespace NHSUKMCP.Services;
 
 /// <summary>
 /// Service for interacting with Azure Search to find postcodes and NHS organizations

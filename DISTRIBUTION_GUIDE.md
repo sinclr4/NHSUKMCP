@@ -79,27 +79,27 @@ Good for JavaScript/TypeScript developers.
 #### Step 1: Build Platform-Specific Binaries
 
 ```bash
-cd /Users/robsinclair/NHSOrgsMCP
+cd /Users/robsinclair/NHSUKMCP
 
 # Build for macOS (Intel)
 dotnet publish -c Release -r osx-x64 --self-contained -p:PublishSingleFile=true
 mkdir -p bin/osx-x64
-cp bin/Release/net9.0/osx-x64/publish/NHSOrgsMCP bin/osx-x64/
+cp bin/Release/net9.0/osx-x64/publish/NHSUKMCP bin/osx-x64/
 
 # Build for macOS (Apple Silicon)
 dotnet publish -c Release -r osx-arm64 --self-contained -p:PublishSingleFile=true
 mkdir -p bin/osx-arm64
-cp bin/Release/net9.0/osx-arm64/publish/NHSOrgsMCP bin/osx-arm64/
+cp bin/Release/net9.0/osx-arm64/publish/NHSUKMCP bin/osx-arm64/
 
 # Build for Linux
 dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true
 mkdir -p bin/linux-x64
-cp bin/Release/net9.0/linux-x64/publish/NHSOrgsMCP bin/linux-x64/
+cp bin/Release/net9.0/linux-x64/publish/NHSUKMCP bin/linux-x64/
 
 # Build for Windows
 dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
 mkdir -p bin/win-x64
-cp bin/Release/net9.0/win-x64/publish/NHSOrgsMCP.exe bin/win-x64/
+cp bin/Release/net9.0/win-x64/publish/NHSUKMCP.exe bin/win-x64/
 ```
 
 #### Step 2: Publish to npm
@@ -199,7 +199,7 @@ For containerized deployments.
 #### Step 1: Build and Push
 
 ```bash
-cd /Users/robsinclair/NHSOrgsMCP
+cd /Users/robsinclair/NHSUKMCP
 
 # Build
 docker build -t yourusername/nhs-orgs-mcp:latest .
@@ -280,10 +280,10 @@ pip install nhs-organizations-mcp
 - ✅ `README.md` - Installation instructions
 - ✅ `LICENSE` - MIT or appropriate license
 - ✅ `bin/server.js` - Launcher script
-- ✅ `bin/osx-x64/NHSOrgsMCP` - macOS Intel binary
-- ✅ `bin/osx-arm64/NHSOrgsMCP` - macOS ARM binary
-- ✅ `bin/linux-x64/NHSOrgsMCP` - Linux binary
-- ✅ `bin/win-x64/NHSOrgsMCP.exe` - Windows binary
+- ✅ `bin/osx-x64/NHSUKMCP` - macOS Intel binary
+- ✅ `bin/osx-arm64/NHSUKMCP` - macOS ARM binary
+- ✅ `bin/linux-x64/NHSUKMCP` - Linux binary
+- ✅ `bin/win-x64/NHSUKMCP.exe` - Windows binary
 
 ---
 

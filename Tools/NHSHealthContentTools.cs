@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
-using NHSOrgsMCP.Services;
+using NHSUKMCP.Services;
 
-namespace NHSOrgsMCP.Tools;
+namespace NHSUKMCP.Tools;
 
 /// <summary>
 /// MCP tools for retrieving NHS health content

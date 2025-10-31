@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text.Json;
 
-namespace NHSOrgsMCP;
+namespace NHSUKMCP;
 
 /// <summary>
 /// Extremely lightweight health endpoint using HttpListener (no ASP.NET dependency) on port 8080.

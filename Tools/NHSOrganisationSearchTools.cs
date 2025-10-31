@@ -1,10 +1,10 @@
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
-using NHSOrgsMCP.Models;
-using NHSOrgsMCP.Services;
+using NHSUKMCP.Models;
+using NHSUKMCP.Services;
 
-namespace NHSOrgsMCP.Tools;
+namespace NHSUKMCP.Tools;
 
 /// <summary>
 /// MCP tools for searching NHS organisations

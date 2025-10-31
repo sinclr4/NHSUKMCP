@@ -21,7 +21,7 @@ Update your `claude_desktop_config.json` to include the environment variables:
 {
   "mcpServers": {
     "nhs-organizations-mcp-server": {
-      "command": "/Users/robsinclair/NHSOrgsMCP/publish/NHSOrgsMCP",
+      "command": "/Users/robsinclair/NHSUKMCP/publish/NHSUKMCP",
       "env": {
         "AZURE_SEARCH_ENDPOINT": "https://nhs-uk-search.search.windows.net",
         "AZURE_SEARCH_API_KEY": "your-api-key-here",
@@ -52,7 +52,7 @@ To connect to this MCP server from Postman, use the local executable with enviro
 ```json
 {
   "name": "NHS Organisations MCP",
-  "command": "/Users/robsinclair/NHSOrgsMCP/bin/Release/net9.0/NHSOrgsMCP",
+  "command": "/Users/robsinclair/NHSUKMCP/bin/Release/net9.0/NHSUKMCP",
   "env": {
     "AZURE_SEARCH_ENDPOINT": "https://nhsuksearchintuks.search.windows.net",
     "AZURE_SEARCH_API_KEY": "your-api-key-here",

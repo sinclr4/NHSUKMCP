@@ -85,7 +85,7 @@ See [AZURE_SETUP.md](AZURE_SETUP.md) for Azure Search configuration instructions
 
 ```bash
 git clone <repository-url>
-cd NHSOrgsMCP
+cd NHSUKMCP
 dotnet restore
 dotnet build
 ```
@@ -107,7 +107,7 @@ Add this server to your Claude Desktop configuration file (`~/Library/Applicatio
 {
   "mcpServers": {
     "nhs-organizations-mcp-server": {
-      "command": "/path/to/NHSOrgsMCP/publish/NHSOrgsMCP"
+      "command": "/path/to/NHSUKMCP/publish/NHSUKMCP"
     }
   }
 }
@@ -118,7 +118,7 @@ Add this server to your Claude Desktop configuration file (`~/Library/Applicatio
 {
   "mcpServers": {
     "nhs-organizations-mcp-server": {
-      "command": "/path/to/NHSOrgsMCP/publish/NHSOrgsMCP",
+      "command": "/path/to/NHSUKMCP/publish/NHSUKMCP",
       "env": {
         "API_MANAGEMENT_ENDPOINT": "https://nhsuk-apim-int-uks.azure-api.net/service-search",
         "API_MANAGEMENT_SUBSCRIPTION_KEY": "your-subscription-key-here"
@@ -128,7 +128,7 @@ Add this server to your Claude Desktop configuration file (`~/Library/Applicatio
 }
 ```
 
-**Important**: Replace `/path/to/NHSOrgsMCP` with the actual absolute path to your project directory.
+**Important**: Replace `/path/to/NHSUKMCP` with the actual absolute path to your project directory.
 
 See [AZURE_SETUP.md](AZURE_SETUP.md) for detailed Azure Search configuration instructions.
 
