@@ -1,4 +1,4 @@
-# NHS Organizations MCP Server
+# NHS Organisations MCP Server
 
 This is a .NET MCP (Model Context Protocol) server that enables searching for NHS organizations by type and location.
 

@@ -1,4 +1,4 @@
-# NHS Organizations MCP Server
+# NHS Organisations MCP Server
 
 This is a .NET Model Context Protocol (MCP) server that enables searching for NHS organizations by type and location using Azure API Management.
 
@@ -6,7 +6,7 @@ This is a .NET Model Context Protocol (MCP) server that enables searching for NH
 
 The server provides the following MCP tools:
 
-### 1. GetOrganizationTypes
+### 1. GetOrganisationTypes
 - **Description**: Get a list of all available NHS organization types with their descriptions
 - **Parameters**: None
 - **Returns**: Dictionary of organization type codes and descriptions
@@ -17,7 +17,7 @@ The server provides the following MCP tools:
   - `postcode` (string): UK postcode (e.g., 'SW1A 1AA')
 - **Returns**: Coordinates for the postcode
 
-### 3. SearchOrganizationsByPostcode
+### 3. SearchOrganisationsByPostcode
 - **Description**: Search for NHS organizations by type and postcode
 - **Parameters**:
   - `organizationType` (string): NHS organization type code (e.g., 'PHA', 'GPP', 'HOS')
@@ -25,7 +25,7 @@ The server provides the following MCP tools:
   - `maxResults` (int, optional): Maximum number of results (default: 10, max: 50)
 - **Returns**: List of NHS organizations near the specified postcode
 
-### 4. SearchOrganizationsByCoordinates
+### 4. SearchOrganisationsByCoordinates
 - **Description**: Search for NHS organizations by type and coordinates
 - **Parameters**:
   - `organizationType` (string): NHS organization type code
@@ -34,7 +34,7 @@ The server provides the following MCP tools:
   - `maxResults` (int, optional): Maximum number of results (default: 10, max: 50)
 - **Returns**: List of NHS organizations near the specified coordinates
 
-## Supported Organization Types
+## Supported Organisation Types
 
 | Code | Description |
 |------|-------------|
@@ -145,7 +145,7 @@ The server is built using:
 
 1. **Models/Models.cs**: Data models for API Management configuration, organization types, and results
 2. **Services/AzureSearchService.cs**: Service for interacting with Azure API Management
-3. **Tools/NHSOrganizationTools.cs**: MCP tools that expose the search functionality
+3. **Tools/NHSOrganisationTools.cs**: MCP tools that expose the search functionality
 4. **Program.cs**: Application entry point and DI configuration
 
 ## Configuration
@@ -162,21 +162,21 @@ The API Management configuration uses environment variables:
 ### Example 1: Find nearby pharmacies
 ```
 User: "Find pharmacies near postcode SW1A 1AA"
-1. Call GetOrganizationTypes() to understand available types
-2. Call SearchOrganizationsByPostcode("PHA", "SW1A 1AA", 10)
+1. Call GetOrganisationTypes() to understand available types
+2. Call SearchOrganisationsByPostcode("PHA", "SW1A 1AA", 10)
 ```
 
 ### Example 2: Find hospitals by coordinates
 ```
 User: "Find hospitals near latitude 51.5074, longitude -0.1278"
-1. Call SearchOrganizationsByCoordinates("HOS", 51.5074, -0.1278, 5)
+1. Call SearchOrganisationsByCoordinates("HOS", 51.5074, -0.1278, 5)
 ```
 
 ## Error Handling
 
 The server includes comprehensive error handling:
 - Invalid postcode validation
-- Organization type validation
+- Organisation type validation
 - Coordinate range validation
 - Azure Search API error handling
 - Structured error responses
@@ -189,7 +189,7 @@ All operations are logged to stderr using the Microsoft.Extensions.Logging frame
 
 To extend the server:
 
-1. Add new tools to `Tools/NHSOrganizationTools.cs`
+1. Add new tools to `Tools/NHSOrganisationTools.cs`
 2. Implement additional Azure Search functionality in `Services/AzureSearchService.cs`
 3. Add new data models to `Models/Models.cs` as needed
 

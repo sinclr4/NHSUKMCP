@@ -10,9 +10,9 @@ public class AzureSearchConfig
 }
 
 /// <summary>
-/// NHS Organization type mappings
+/// NHS Organisation type mappings
 /// </summary>
-public static class OrganizationTypes
+public static class OrganisationTypes
 {
     public static readonly Dictionary<string, string> Types = new()
     {
@@ -66,12 +66,12 @@ public class PostcodeResult
 }
 
 /// <summary>
-/// Organization search result
+/// Organisation search result
 /// </summary>
-public class OrganizationResult
+public class OrganisationResult
 {
-    public string? OrganizationName { get; set; }
-    public string? OrganizationTypeID { get; set; }
+    public string? OrganisationName { get; set; }
+    public string? OrganisationTypeID { get; set; }
     public string? ODSCode { get; set; }
     public string? Address { get; set; }
     public string? Postcode { get; set; }

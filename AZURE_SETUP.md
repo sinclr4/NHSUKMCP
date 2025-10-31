@@ -51,7 +51,7 @@ To connect to this MCP server from Postman, use the local executable with enviro
 
 ```json
 {
-  "name": "NHS Organizations MCP",
+  "name": "NHS Organisations MCP",
   "command": "/Users/robsinclair/NHSOrgsMCP/bin/Release/net9.0/NHSOrgsMCP",
   "env": {
     "AZURE_SEARCH_ENDPOINT": "https://nhsuksearchintuks.search.windows.net",

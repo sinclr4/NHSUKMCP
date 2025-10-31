@@ -2,7 +2,7 @@
 
 ## Changes Made
 
-The NHS Organizations MCP Server has been updated to use Azure API Management instead of direct Azure Cognitive Search.
+The NHS Organisations MCP Server has been updated to use Azure API Management instead of direct Azure Cognitive Search.
 
 ### What Changed
 
@@ -10,11 +10,11 @@ The NHS Organizations MCP Server has been updated to use Azure API Management in
 
 **Before** (Azure Cognitive Search):
 - Postcode: `https://{searchname}.search.windows.net/indexes/{index}/docs/search`
-- Organization Search: `https://{searchname}.search.windows.net/indexes/{index}/docs/search`
+- Organisation Search: `https://{searchname}.search.windows.net/indexes/{index}/docs/search`
 
 **After** (API Management):
 - Postcode: `https://nhsuk-apim-int-uks.azure-api.net/service-search/postcodesandplaces/{postcode}?api-version=2`
-- Organization Search: `https://nhsuk-apim-int-uks.azure-api.net/service-search/search?api-version=2`
+- Organisation Search: `https://nhsuk-apim-int-uks.azure-api.net/service-search/search?api-version=2`
 
 #### 2. **Authentication**
 
@@ -29,11 +29,11 @@ The NHS Organizations MCP Server has been updated to use Azure API Management in
 
 **Before**:
 - Postcode: POST with JSON body containing search query
-- Organization: POST with JSON body containing search query
+- Organisation: POST with JSON body containing search query
 
 **After**:
 - Postcode: GET with postcode in URL path
-- Organization: POST with JSON body (same as before)
+- Organisation: POST with JSON body (same as before)
 
 #### 4. **Response Format**
 
@@ -43,7 +43,7 @@ The NHS Organizations MCP Server has been updated to use Azure API Management in
 
 **After**:
 - Postcode returns direct object (not in `value` array)
-- Organization search still returns `value` array
+- Organisation search still returns `value` array
 - Same field names preserved
 
 ### Files Updated

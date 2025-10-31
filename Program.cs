@@ -77,7 +77,7 @@ if (!runInCloudMode)
         };
     })
     .WithStdioServerTransport()
-    .WithTools<NHSOrganizationSearchTools>()
+    .WithTools<NHSOrganisationSearchTools>()
     .WithTools<NHSHealthContentTools>();
 }
 
@@ -103,7 +103,7 @@ if (runInCloudMode && webBuilder != null)
             return Results.Json(new
             {
                 success = true,
-                organizationTypes = OrganizationTypes.Types
+                organizationTypes = OrganisationTypes.Types
             });
         }
         catch (Exception ex)
@@ -168,7 +168,7 @@ if (runInCloudMode && webBuilder != null)
             }
             
             var orgType = organizationType.ToUpper();
-            if (!OrganizationTypes.Types.ContainsKey(orgType))
+            if (!OrganisationTypes.Types.ContainsKey(orgType))
             {
                 return Results.Json(new
                 {
@@ -192,7 +192,7 @@ if (runInCloudMode && webBuilder != null)
             }
             
             // Search organizations
-            var organizations = await searchService.SearchOrganizationsAsync(
+            var organizations = await searchService.SearchOrganisationsAsync(
                 orgType,
                 coordinates.Latitude,
                 coordinates.Longitude,
@@ -208,7 +208,7 @@ if (runInCloudMode && webBuilder != null)
                     longitude = coordinates.Longitude
                 },
                 organizationType = orgType,
-                organizationTypeDescription = OrganizationTypes.Types[orgType],
+                organizationTypeDescription = OrganisationTypes.Types[orgType],
                 resultCount = organizations.Count,
                 organizations = organizations
             });
@@ -235,7 +235,7 @@ if (runInCloudMode && webBuilder != null)
             }
             
             var orgType = organizationType.ToUpper();
-            if (!OrganizationTypes.Types.ContainsKey(orgType))
+            if (!OrganisationTypes.Types.ContainsKey(orgType))
             {
                 return Results.Json(new
                 {
@@ -247,7 +247,7 @@ if (runInCloudMode && webBuilder != null)
             logger.LogInformation("GET /api/search/coordinates?organizationType={OrgType}&latitude={Lat}&longitude={Lon}&maxResults={MaxResults}",
                 orgType, latitude, longitude, maxResults);
             
-            var organizations = await searchService.SearchOrganizationsAsync(
+            var organizations = await searchService.SearchOrganisationsAsync(
                 orgType,
                 latitude,
                 longitude,
@@ -262,7 +262,7 @@ if (runInCloudMode && webBuilder != null)
                     longitude = longitude
                 },
                 organizationType = orgType,
-                organizationTypeDescription = OrganizationTypes.Types[orgType],
+                organizationTypeDescription = OrganisationTypes.Types[orgType],
                 resultCount = organizations.Count,
                 organizations = organizations
             });

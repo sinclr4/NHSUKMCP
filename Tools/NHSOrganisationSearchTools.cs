@@ -10,20 +10,20 @@ namespace NHSOrgsMCP.Tools;
 /// MCP tools for searching NHS organizations
 /// </summary>
 [McpServerToolType]
-public class NHSOrganizationSearchTools
+public class NHSOrganisationSearchTools
 {
     private readonly AzureSearchService? _searchService;
-    private readonly ILogger<NHSOrganizationSearchTools> _logger;
+    private readonly ILogger<NHSOrganisationSearchTools> _logger;
 
     // Constructor with Azure Search service (preferred when service is registered)
-    public NHSOrganizationSearchTools(ILogger<NHSOrganizationSearchTools> logger, AzureSearchService searchService)
+    public NHSOrganisationSearchTools(ILogger<NHSOrganisationSearchTools> logger, AzureSearchService searchService)
     {
         _searchService = searchService;
         _logger = logger;
     }
 
     // Fallback constructor without Azure Search service
-    public NHSOrganizationSearchTools(ILogger<NHSOrganizationSearchTools> logger)
+    public NHSOrganisationSearchTools(ILogger<NHSOrganisationSearchTools> logger)
     {
         _searchService = null;
         _logger = logger;
@@ -35,12 +35,12 @@ public class NHSOrganizationSearchTools
     /// <returns>Dictionary of organization type codes and descriptions</returns>
     [McpServerTool(Name = "get_organization_types")]
     [Description("Get a list of all available NHS organization types with their descriptions")]
-    public Dictionary<string, string> GetOrganizationTypes()
+    public Dictionary<string, string> GetOrganisationTypes()
     {
         try
         {
             _logger.LogInformation("Retrieving NHS organization types - START");
-            var result = OrganizationTypes.Types;
+            var result = OrganisationTypes.Types;
             _logger.LogInformation("Retrieved {Count} organization types successfully", result.Count);
             return result;
         }
@@ -84,14 +84,14 @@ public class NHSOrganizationSearchTools
     /// <returns>List of NHS organizations near the specified postcode</returns>
     [McpServerTool(Name = "search_organizations_by_postcode")]
     [Description("Search for NHS organizations by type and postcode. First converts postcode to coordinates, then searches for nearby organizations.")]
-    public async Task<object> SearchOrganizationsByPostcode(
-        [Description("NHS organization type code (e.g., 'PHA', 'GPP', 'HOS'). Use GetOrganizationTypes to see all available types.")] string organizationType,
+    public async Task<object> SearchOrganisationsByPostcode(
+        [Description("NHS organization type code (e.g., 'PHA', 'GPP', 'HOS'). Use GetOrganisationTypes to see all available types.")] string organizationType,
         [Description("UK postcode to search near (e.g., 'SW1A 1AA')")] string postcode,
         [Description("Maximum number of results to return (1-50, default: 10)")] int maxResults = 10)
     {
         if (string.IsNullOrWhiteSpace(organizationType))
         {
-            throw new ArgumentException("Organization type cannot be empty", nameof(organizationType));
+            throw new ArgumentException("Organisation type cannot be empty", nameof(organizationType));
         }
 
         if (string.IsNullOrWhiteSpace(postcode))
@@ -105,9 +105,9 @@ public class NHSOrganizationSearchTools
         }
 
         // Validate organization type
-        if (!OrganizationTypes.Types.ContainsKey(organizationType.ToUpper()))
+        if (!OrganisationTypes.Types.ContainsKey(organizationType.ToUpper()))
         {
-            var availableTypes = string.Join(", ", OrganizationTypes.Types.Keys);
+            var availableTypes = string.Join(", ", OrganisationTypes.Types.Keys);
             throw new ArgumentException($"Invalid organization type '{organizationType}'. Available types: {availableTypes}", nameof(organizationType));
         }
 
@@ -116,7 +116,7 @@ public class NHSOrganizationSearchTools
             throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration and set the API_MANAGEMENT_SUBSCRIPTION_KEY environment variable.");
         }
 
-        _logger.LogInformation("Searching for {OrganizationType} organizations near postcode {Postcode}", 
+        _logger.LogInformation("Searching for {OrganisationType} organizations near postcode {Postcode}", 
             organizationType, postcode);
 
         try
@@ -135,7 +135,7 @@ public class NHSOrganizationSearchTools
             }
 
             // Then search for organizations
-            var organizations = await _searchService.SearchOrganizationsAsync(
+            var organizations = await _searchService.SearchOrganisationsAsync(
                 organizationType.ToUpper(), 
                 coordinates.Latitude, 
                 coordinates.Longitude, 
@@ -151,7 +151,7 @@ public class NHSOrganizationSearchTools
                     longitude = coordinates.Longitude
                 },
                 organizationType = organizationType,
-                organizationTypeDescription = OrganizationTypes.Types[organizationType.ToUpper()],
+                organizationTypeDescription = OrganisationTypes.Types[organizationType.ToUpper()],
                 resultCount = organizations.Count,
                 organizations = organizations
             };
@@ -179,15 +179,15 @@ public class NHSOrganizationSearchTools
     /// <returns>List of NHS organizations near the specified coordinates</returns>
     [McpServerTool(Name = "search_organizations_by_coordinates")]
     [Description("Search for NHS organizations by type and coordinates (latitude/longitude)")]
-    public async Task<object> SearchOrganizationsByCoordinates(
-        [Description("NHS organization type code (e.g., 'PHA', 'GPP', 'HOS'). Use GetOrganizationTypes to see all available types.")] string organizationType,
+    public async Task<object> SearchOrganisationsByCoordinates(
+        [Description("NHS organization type code (e.g., 'PHA', 'GPP', 'HOS'). Use GetOrganisationTypes to see all available types.")] string organizationType,
         [Description("Latitude coordinate")] double latitude,
         [Description("Longitude coordinate")] double longitude,
         [Description("Maximum number of results to return (1-50, default: 10)")] int maxResults = 10)
     {
         if (string.IsNullOrWhiteSpace(organizationType))
         {
-            throw new ArgumentException("Organization type cannot be empty", nameof(organizationType));
+            throw new ArgumentException("Organisation type cannot be empty", nameof(organizationType));
         }
 
         if (maxResults < 1 || maxResults > 50)
@@ -206,9 +206,9 @@ public class NHSOrganizationSearchTools
         }
 
         // Validate organization type
-        if (!OrganizationTypes.Types.ContainsKey(organizationType.ToUpper()))
+        if (!OrganisationTypes.Types.ContainsKey(organizationType.ToUpper()))
         {
-            var availableTypes = string.Join(", ", OrganizationTypes.Types.Keys);
+            var availableTypes = string.Join(", ", OrganisationTypes.Types.Keys);
             throw new ArgumentException($"Invalid organization type '{organizationType}'. Available types: {availableTypes}", nameof(organizationType));
         }
 
@@ -217,12 +217,12 @@ public class NHSOrganizationSearchTools
             throw new InvalidOperationException("Azure Search service is not configured. Please check your configuration and set the API_MANAGEMENT_SUBSCRIPTION_KEY environment variable.");
         }
 
-        _logger.LogInformation("Searching for {OrganizationType} organizations near {Latitude}, {Longitude}", 
+        _logger.LogInformation("Searching for {OrganisationType} organizations near {Latitude}, {Longitude}", 
             organizationType, latitude, longitude);
 
         try
         {
-            var organizations = await _searchService.SearchOrganizationsAsync(
+            var organizations = await _searchService.SearchOrganisationsAsync(
                 organizationType.ToUpper(), 
                 latitude, 
                 longitude, 
@@ -237,7 +237,7 @@ public class NHSOrganizationSearchTools
                     longitude = longitude
                 },
                 organizationType = organizationType,
-                organizationTypeDescription = OrganizationTypes.Types[organizationType.ToUpper()],
+                organizationTypeDescription = OrganisationTypes.Types[organizationType.ToUpper()],
                 resultCount = organizations.Count,
                 organizations = organizations
             };

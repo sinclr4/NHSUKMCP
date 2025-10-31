@@ -1,4 +1,4 @@
-# NHS Organizations MCP Server - Distribution Guide
+# NHS Organisations MCP Server - Distribution Guide
 
 This guide explains how to package and distribute your MCP server so others can easily install and use it.
 

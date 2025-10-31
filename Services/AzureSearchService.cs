@@ -110,7 +110,7 @@ public class AzureSearchService
     /// <param name="longitude">Longitude coordinate</param>
     /// <param name="maxResults">Maximum number of results to return</param>
     /// <returns>List of organizations near the specified location</returns>
-    public async Task<List<OrganizationResult>> SearchOrganizationsAsync(
+    public async Task<List<OrganisationResult>> SearchOrganisationsAsync(
         string organizationType, 
         double latitude, 
         double longitude, 
@@ -134,7 +134,7 @@ public class AzureSearchService
             var json = JsonSerializer.Serialize(searchRequest);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-            _logger.LogInformation("Searching for organizations of type {OrganizationType} near {Latitude}, {Longitude}", 
+            _logger.LogInformation("Searching for organizations of type {OrganisationType} near {Latitude}, {Longitude}", 
                 organizationType, latitude, longitude);
             _logger.LogDebug("Search request: {Json}", json);
             
@@ -152,19 +152,19 @@ public class AzureSearchService
             var responseContent = await response.Content.ReadAsStringAsync();
             using var document = JsonDocument.Parse(responseContent);
             
-            var results = new List<OrganizationResult>();
+            var results = new List<OrganisationResult>();
             var values = document.RootElement.GetProperty("value");
 
             foreach (var item in values.EnumerateArray())
             {
-                var organization = new OrganizationResult();
+                var organization = new OrganisationResult();
 
                 // Extract organization details using actual field names from the index
                 if (item.TryGetProperty("OrganisationName", out var nameProp))
-                    organization.OrganizationName = nameProp.GetString();
+                    organization.OrganisationName = nameProp.GetString();
 
                 if (item.TryGetProperty("OrganisationTypeId", out var typeProp))
-                    organization.OrganizationTypeID = typeProp.GetString();
+                    organization.OrganisationTypeID = typeProp.GetString();
 
                 if (item.TryGetProperty("ODSCode", out var odsProp))
                     organization.ODSCode = odsProp.GetString();
@@ -215,14 +215,14 @@ public class AzureSearchService
                 results.Add(organization);
             }
 
-            _logger.LogInformation("Found {Count} organizations of type {OrganizationType} near {Latitude}, {Longitude}", 
+            _logger.LogInformation("Found {Count} organizations of type {OrganisationType} near {Latitude}, {Longitude}", 
                 results.Count, organizationType, latitude, longitude);
 
             return results;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error searching for organizations of type {OrganizationType} near {Latitude}, {Longitude}", 
+            _logger.LogError(ex, "Error searching for organizations of type {OrganisationType} near {Latitude}, {Longitude}", 
                 organizationType, latitude, longitude);
             throw;
         }
