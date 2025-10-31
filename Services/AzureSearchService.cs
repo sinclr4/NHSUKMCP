@@ -304,6 +304,7 @@ public class AzureSearchService
                 
                 foreach (var section in mainEntityProp.EnumerateArray())
                 {
+                    // Extract top-level section
                     var topicSection = new HealthTopicSection();
                     
                     if (section.TryGetProperty("headline", out var headlineProp))
@@ -322,6 +323,12 @@ public class AzureSearchService
                     {
                         result.Sections.Add(topicSection);
                     }
+
+                    // Recursively extract from hasPart
+                    if (section.TryGetProperty("hasPart", out var hasPartProp) && hasPartProp.ValueKind == JsonValueKind.Array)
+                    {
+                        ExtractSectionsFromHasPart(hasPartProp, result.Sections);
+                    }
                 }
             }
 
@@ -332,6 +339,37 @@ public class AzureSearchService
         {
             _logger.LogError(ex, "Error fetching health topic: {TopicSlug}", topicSlug);
             throw;
+        }
+    }
+
+    private void ExtractSectionsFromHasPart(JsonElement hasPartArray, List<HealthTopicSection> sections)
+    {
+        foreach (var part in hasPartArray.EnumerateArray())
+        {
+            var section = new HealthTopicSection();
+            
+            if (part.TryGetProperty("headline", out var headlineProp))
+                section.Headline = headlineProp.GetString();
+
+            if (part.TryGetProperty("text", out var textProp))
+                section.Text = textProp.GetString();
+
+            if (part.TryGetProperty("description", out var descProp))
+                section.Description = descProp.GetString();
+
+            // Only add sections that have at least one non-empty field
+            if (!string.IsNullOrWhiteSpace(section.Headline) ||
+                !string.IsNullOrWhiteSpace(section.Text) ||
+                !string.IsNullOrWhiteSpace(section.Description))
+            {
+                sections.Add(section);
+            }
+
+            // Recursively process nested hasPart
+            if (part.TryGetProperty("hasPart", out var nestedHasPart) && nestedHasPart.ValueKind == JsonValueKind.Array)
+            {
+                ExtractSectionsFromHasPart(nestedHasPart, sections);
+            }
         }
     }
 }
