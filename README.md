@@ -128,211 +128,44 @@ func start
 
 The server will start on `http://localhost:7071` by default.
 
-## ?? Adding to Claude Desktop
+## ?? Azure Deployment
 
-To use this MCP server with Claude Desktop, you need to configure it in Claude's configuration file.
+The NHS UK MCP Server is deployed to Azure Functions for production use.
 
-### Windows Configuration
+### Deployed Function App
 
-1. Locate your Claude Desktop config file at:
-   ```
-   %APPDATA%\Claude\claude_desktop_config.json
-   ```
+- **URL**: `https://nhsuk-mcp-server-func.azurewebsites.net`
+- **Resource Group**: `rg-nhsuk-mcp`
+- **Region**: UK South
+- **Runtime**: .NET 8 (Isolated)
 
-2. Add the NHS UK MCP Server configuration:
+### Deployed Functions
 
-```json
-{
-  "mcpServers": {
-    "nhs-uk": {
-   "command": "func",
-      "args": [
-        "start",
-        "--port",
-   "7071"
-      ],
-      "cwd": "C:\\Users\\YourUsername\\Source\\Repos\\NHSUKMCP\\src",
-      "env": {
-        "NHS_API_KEY": "YOUR_NHS_API_KEY_HERE"
-      }
-    }
-  }
-}
-```
+| Function Name | Trigger Type | Description |
+|--------------|-------------|-------------|
+| `GetContentAsync` | MCP Tool | Retrieve NHS health content |
+| `GetOrganisationTypes` | MCP Tool | List organisation types |
+| `ConvertPostcodeToCoordinates` | MCP Tool | Convert postcodes |
+| `SearchOrgsByPostcode` | MCP Tool | Find NHS organisations |
 
-### macOS/Linux Configuration
+### Deploying Updates
 
-1. Locate your Claude Desktop config file at:
-   ```
-   ~/Library/Application Support/Claude/claude_desktop_config.json
-   ```
-
-2. Add the NHS UK MCP Server configuration:
-
-```json
-{
-  "mcpServers": {
-    "nhs-uk": {
-      "command": "func",
-      "args": [
-        "start",
-     "--port",
-        "7071"
-      ],
-      "cwd": "/path/to/NHSUKMCP/src",
- "env": {
-        "NHS_API_KEY": "YOUR_NHS_API_KEY_HERE"
-  }
-    }
-  }
-}
-```
-
-### 3. Restart Claude Desktop
-
-After saving the configuration file, completely restart Claude Desktop for the changes to take effect.
-
-### 4. Verify Connection
-
-In Claude Desktop, you should see the MCP server connection indicator. You can test it by asking:
-
-> "Can you get me information about diabetes from the NHS?"
-
-## ?? Testing the Server
-
-You can test the MCP server tools directly using Claude or by making HTTP requests:
-
-### Example: Get Health Content
-
-```bash
-curl -X POST http://localhost:7071/api/GetContentAsync \
-  -H "Content-Type: application/json" \
-  -d '{"topic": "diabetes"}'
-```
-
-### Example: Search for Pharmacies
-
-```bash
-curl -X POST http://localhost:7071/api/SearchOrgsByPostcode \
-  -H "Content-Type: application/json" \
-  -d '{
- "postcode": "SW1A 1AA",
-  "organisationType": "PHA",
-    "maxResults": 5
-  }'
-```
-
-## ??? Project Structure
-
-```
-NHSUKMCP/
-??? src/
-?   ??? NHSUKMCPServer.csproj    # Project file
-?   ??? NHSUKMCPServer.sln       # Solution file
-?   ??? Program.cs      # Application entry point
-?   ??? host.json        # Azure Functions host configuration
-?   ??? local.settings.json       # Local environment settings
-?   ??? Models/
-?   ?   ??? Models.cs  # Data models
-?   ??? Services/
-?   ?   ??? APIEndpoints.cs    # NHS API service
-?   ??? Tools/
-?       ??? NHSHealthContentTools.cs      # Health content MCP tools
-?       ??? NHSOrganisationTools.cs       # Organisation search MCP tools
-?       ??? ToolsInformation.cs   # Tool metadata
-??? README.md
-```
-
-## ?? Development
-
-### Building
+To deploy updates to Azure:
 
 ```bash
 cd src
-dotnet build
-```
 
-### Running Locally
+# Build the project
+dotnet build --configuration Release
 
-```bash
-cd src
-func start
-```
+# Publish the project
+dotnet publish --configuration Release --output ./publish
 
-### Debugging in Visual Studio
+# Create deployment package
+Compress-Archive -Path .\publish\* -DestinationPath .\deploy.zip -Force
 
-1. Open `src/NHSUKMCPServer.sln` in Visual Studio
-2. Press F5 to start debugging
-3. The Azure Functions host will start with breakpoint support
-
-## ?? Dependencies
-
-- **.NET 8**: Target framework
-- **Azure Functions Worker v4**: Serverless hosting
-- **Microsoft.Azure.Functions.Worker.Extensions.Mcp**: MCP protocol support
-- **Azure Search Service**: NHS UK API integration
-- **Application Insights**: Telemetry and monitoring
-
-## ?? Security Notes
-
-- **Never commit your NHS API key** to version control
-- Use User Secrets or environment variables for sensitive data
-- The `local.settings.json` file is excluded from git by default
-- For production deployments, use Azure Key Vault or similar secret management
-
-## ?? API Key Setup
-
-1. Register at [NHS UK Developer Portal](https://developer.api.nhs.uk/)
-2. Create an application to receive your API key
-3. Add the key to your `local.settings.json` or environment variables
-4. The API provides access to NHS health content and organisation search
-
-## ?? Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## ?? License
-
-This project uses NHS UK public APIs. Please review the [NHS UK API terms of use](https://developer.api.nhs.uk/terms).
-
-## ?? Troubleshooting
-
-### Server won't start
-- Ensure .NET 8 SDK is installed: `dotnet --version`
-- Verify Azure Functions Core Tools: `func --version`
-- Check if port 7071 is available: `netstat -ano | findstr :7071`
-
-### Claude can't connect
-- Verify the `cwd` path in `claude_desktop_config.json` is correct
-- Ensure the server is running (`func start`)
-- Check Claude Desktop logs for connection errors
-- Restart Claude Desktop after configuration changes
-
-### API returns errors
-- Verify your NHS API key is valid
-- Check the NHS UK API status page
-- Review Application Insights logs if configured
-
-## ?? Resources
-
-- [Model Context Protocol Documentation](https://modelcontextprotocol.io/)
-- [NHS UK API Documentation](https://developer.api.nhs.uk/)
-- [Azure Functions Documentation](https://docs.microsoft.com/azure/azure-functions/)
-- [.NET 8 Documentation](https://docs.microsoft.com/dotnet/)
-
-## ?? Support
-
-For issues and questions:
-- Open an issue on [GitHub](https://github.com/sinclr4/NHSUKMCP/issues)
-- Check existing issues for solutions
-- Review the troubleshooting section above
-
----
-
-Built with ?? for the NHS and AI-powered healthcare information access
+# Deploy to Azure
+az functionapp deployment source config-zip `
+  --resource-group rg-nhsuk-mcp `
+  --name nhsuk-mcp-server-func `
+  --src .\deploy.zip
