@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using NHSUKMCP.Models;
 
@@ -37,21 +37,21 @@ public class AzureSearchService
             var searchUrl = $"{_config.Endpoint}/postcodesandplaces/?search={Uri.EscapeDataString(normalizedPostcode)}&api-version=2";
 
             _logger.LogInformation("Searching for postcode: {Postcode}", postcode);
-            
+
             var response = await _httpClient.GetAsync(searchUrl);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
                 _logger.LogError("API Management postcode error: {StatusCode} - {ErrorContent}", response.StatusCode, errorContent);
                 throw new HttpRequestException($"API Management postcode request failed: {response.StatusCode} - {errorContent}");
             }
-            
+
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsStringAsync();
             using var document = JsonDocument.Parse(responseContent);
-            
+
             // API Management returns results in a "value" array like Azure Search
             if (!document.RootElement.TryGetProperty("value", out var valueArray) || valueArray.GetArrayLength() == 0)
             {
@@ -60,7 +60,7 @@ public class AzureSearchService
             }
 
             var firstResult = valueArray[0];
-            
+
             // Extract coordinates from the first result
             double? latitude = null;
             double? longitude = null;
@@ -111,16 +111,16 @@ public class AzureSearchService
     /// <param name="maxResults">Maximum number of results to return</param>
     /// <returns>List of organizations near the specified location</returns>
     public async Task<List<OrganisationResult>> SearchOrganisationsAsync(
-        string organizationType, 
-        double latitude, 
-        double longitude, 
+        string organizationType,
+        double latitude,
+        double longitude,
         int maxResults = 10)
     {
         try
         {
             // Use API Management endpoint for service search
             var searchUrl = $"{_config.Endpoint}/search?api-version=2";
-            
+
             var searchRequest = new
             {
                 search = "*",
@@ -134,24 +134,24 @@ public class AzureSearchService
             var json = JsonSerializer.Serialize(searchRequest);
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-            _logger.LogInformation("Searching for organizations of type {OrganisationType} near {Latitude}, {Longitude}", 
+            _logger.LogInformation("Searching for organizations of type {OrganisationType} near {Latitude}, {Longitude}",
                 organizationType, latitude, longitude);
             _logger.LogDebug("Search request: {Json}", json);
-            
+
             var response = await _httpClient.PostAsync(searchUrl, content);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
                 _logger.LogError("API Management search error: {StatusCode} - {ErrorContent}", response.StatusCode, errorContent);
                 throw new HttpRequestException($"API Management search request failed: {response.StatusCode} - {errorContent}");
             }
-            
+
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsStringAsync();
             using var document = JsonDocument.Parse(responseContent);
-            
+
             var results = new List<OrganisationResult>();
             var values = document.RootElement.GetProperty("value");
 
@@ -181,7 +181,7 @@ public class AzureSearchService
                     addressParts.Add(city.GetString()!);
                 if (item.TryGetProperty("County", out var county) && !string.IsNullOrWhiteSpace(county.GetString()))
                     addressParts.Add(county.GetString()!);
-                
+
                 organization.Address = string.Join(", ", addressParts);
 
                 if (item.TryGetProperty("Postcode", out var postcodeProp))
@@ -215,14 +215,14 @@ public class AzureSearchService
                 results.Add(organization);
             }
 
-            _logger.LogInformation("Found {Count} organizations of type {OrganisationType} near {Latitude}, {Longitude}", 
+            _logger.LogInformation("Found {Count} organizations of type {OrganisationType} near {Latitude}, {Longitude}",
                 results.Count, organizationType, latitude, longitude);
 
             return results;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error searching for organizations of type {OrganisationType} near {Latitude}, {Longitude}", 
+            _logger.LogError(ex, "Error searching for organizations of type {OrganisationType} near {Latitude}, {Longitude}",
                 organizationType, latitude, longitude);
             throw;
         }
@@ -238,26 +238,26 @@ public class AzureSearchService
         try
         {
             var normalizedSlug = topicSlug.Trim().ToLower();
-            
+
             // Extract base URL (remove /service-search if present) and use /conditions endpoint
             var baseUrl = _config.Endpoint.Replace("/service-search", "");
             var url = $"{baseUrl}/conditions/{Uri.EscapeDataString(normalizedSlug)}";
 
             _logger.LogInformation("Fetching health topic: {TopicSlug} from {Url}", normalizedSlug, url);
-            
+
             var response = await _httpClient.GetAsync(url);
-            
+
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 _logger.LogWarning("Health topic not found: {TopicSlug}", normalizedSlug);
                 return null;
             }
-            
+
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsStringAsync();
             using var document = JsonDocument.Parse(responseContent);
-            
+
             var result = new HealthTopicResult();
 
             // Extract basic information
@@ -301,12 +301,12 @@ public class AzureSearchService
             if (document.RootElement.TryGetProperty("mainEntityOfPage", out var mainEntityProp))
             {
                 result.Sections = new List<HealthTopicSection>();
-                
+
                 foreach (var section in mainEntityProp.EnumerateArray())
                 {
                     // Extract top-level section
                     var topicSection = new HealthTopicSection();
-                    
+
                     if (section.TryGetProperty("headline", out var headlineProp))
                         topicSection.Headline = headlineProp.GetString();
 
@@ -347,7 +347,7 @@ public class AzureSearchService
         foreach (var part in hasPartArray.EnumerateArray())
         {
             var section = new HealthTopicSection();
-            
+
             if (part.TryGetProperty("headline", out var headlineProp))
                 section.Headline = headlineProp.GetString();
 
