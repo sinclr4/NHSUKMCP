@@ -31,7 +31,7 @@ internal sealed class ToolsInformation
     public const string LocationPropertyDescription = "The location, place name or postcode to convert.";
     public const string SearchOrgsByPostcodeToolName = "search_organisations_by_postcode";
     public const string SearchOrgsByPostcodeToolDescription =
-        "Convert a UK postcode to latitude and longitude coordinates.";
+      "Search for NHS organisations near a UK postcode. Returns organisations sorted by distance.";
     public const string SearchOrgsTypePropertyName = "organisation_type";
     public const string SearchOrgsTypePropertyDescription = "The type of organisation to search for.";
 }
